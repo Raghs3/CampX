@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CampX - AI-Powered Campus Marketplace</title>
+    <meta name="description" content="Buy, sell, and discover items within your campus community with AI-powered features.">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-icon">🎓</span>
+                <span class="logo-text">CampX</span>
+            </div>
+            
+            <div class="nav-menu" id="navMenu">
+                <a href="#home" class="nav-link active" data-section="home">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a href="#discover" class="nav-link" data-section="discover">
+                    <i class="fas fa-compass"></i>
+                    <span>Discover</span>
+                </a>
+                <a href="#sell" class="nav-link" data-section="sell">
+                    <i class="fas fa-plus"></i>
+                    <span>Sell</span>
+                </a>
+                <a href="#chats" class="nav-link" data-section="chats">
+                    <i class="fas fa-comments"></i>
+                    <span>Chats</span>
+                </a>
+                <a href="#profile" class="nav-link" data-section="profile">
+                    <i class="fas fa-user"></i>
+                    <span>Profile</span>
+                </a>
+            </div>
+            
+            <div class="nav-actions">
+                <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+                
+                <div class="search-container">
+                    <input type="text" class="search-input" placeholder="Search with AI..." id="searchInput">
+                    <button class="search-btn" id="searchBtn">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                
+                <!-- Authentication buttons (shown when not logged in) -->
+                <div class="auth-buttons">
+                    <button class="btn btn-outline" id="loginBtn">Login</button>
+                    <button class="btn btn-primary" id="registerBtn">Join CampX</button>
+                </div>
+                
+                <!-- User menu (shown when logged in) -->
+                <div class="user-menu" style="display: none;">
+                    <div class="user-avatar" id="userAvatar">
+                        <span>U</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mobile-menu-toggle" id="mobileMenuToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Hero Section -->
+        <section id="home" class="hero section active">
+            <div class="hero-content">
+                <div class="hero-left">
+                    <h1 class="hero-title">
+                        Buy & Sell <span class="gradient-text">Campus Items</span> 
+                        with <span class="gradient-text">AI Power</span>
+                    </h1>
+                    <p class="hero-subtitle">
+                        The smart marketplace for students. Upload photos, get AI descriptions, 
+                        find perfect prices, and connect with your campus community.
+                    </p>
+                    <div class="hero-actions">
+                        <button class="btn btn-primary btn-large" id="heroExploreBtn">
+                            <i class="fas fa-compass"></i>
+                            Explore Items
+                        </button>
+                        <button class="btn btn-outline btn-large" id="heroSellBtn">
+                            <i class="fas fa-camera"></i>
+                            Sell with AI
+                        </button>
+                    </div>
+                </div>
+                <div class="hero-right">
+                    <div class="hero-image">
+                        <div class="ai-badge">
+                            <i class="fas fa-brain"></i>
+                            <span>AI Powered</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Discover Section -->
+        <section id="discover" class="discover section">
+            <div class="section-header">
+                <h2>Discover Items</h2>
+                <p>Find exactly what you need with smart filters</p>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="products-container">
+                <div class="products-grid" id="productsGrid">
+                    <!-- Products will be loaded here dynamically -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Sell Section -->  
+        <section id="sell" class="sell section">
+            <div class="section-header">
+                <h2>Sell Your Items</h2>
+                <p>Upload photos and let AI create perfect listings</p>
+            </div>
+            <div class="sell-container">
+                <p>Sell functionality coming soon with AI features!</p>
+            </div>
+        </section>
+
+        <!-- Chats Section -->
+        <section id="chats" class="chats section">
+            <div class="section-header">
+                <h2>Messages</h2>
+                <p>Chat with buyers and sellers</p>
+            </div>
+            <div class="chats-container">
+                <p>Chat functionality coming soon!</p>
+            </div>
+        </section>
+
+        <!-- Profile Section -->
+        <section id="profile" class="profile section">
+            <div class="section-header">
+                <h2>Profile</h2>
+                <p>Manage your account and listings</p>
+            </div>
+            <div class="profile-container">
+                <p>Profile management coming soon!</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- JavaScript -->
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/components.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CampX - AI-Powered Campus Marketplace</title>
+    <meta name="description" content="Buy, sell, and discover items within your campus community with AI-powered features.">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="CampX - Campus Marketplace">
+    <meta property="og:description" content="AI-powered marketplace for students">
+    <meta property="og:type" content="website">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="js/api.js" as="script">
+    <link rel="preload" href="js/auth.js" as="script">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-icon">🎓</span>
+                <span class="logo-text">CampX</span>
+            </div>
+            
+            <div class="nav-menu" id="navMenu">
+                <a href="#home" class="nav-link active" data-section="home">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a href="#discover" class="nav-link" data-section="discover">
+                    <i class="fas fa-compass"></i>
+                    <span>Discover</span>
+                </a>
+                <a href="#sell" class="nav-link" data-section="sell">
+                    <i class="fas fa-plus"></i>
+                    <span>Sell</span>
+                </a>
+                <a href="#chats" class="nav-link" data-section="chats">
+                    <i class="fas fa-comments"></i>
+                    <span>Chats</span>
+                    <span class="notification-badge" id="chatNotificationBadge" style="display: none;"></span>
+                </a>
+                <a href="#profile" class="nav-link" data-section="profile">
+                    <i class="fas fa-user"></i>
+                    <span>Profile</span>
+                </a>
+            </div>
+            
+            <div class="nav-actions">
+                <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+                
+                <div class="search-container">
+                    <input type="text" class="search-input" placeholder="Search with AI..." id="searchInput">
+                    <button class="search-btn" id="searchBtn">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <button class="ai-search-btn" id="aiSearchBtn" title="AI-powered search">
+                        <i class="fas fa-brain"></i>
+                    </button>
+                </div>
+                
+                <!-- Authentication buttons (shown when not logged in) -->
+                <div class="auth-buttons">
+                    <button class="btn btn-outline" id="loginBtn">Login</button>
+                    <button class="btn btn-primary" id="registerBtn">Join CampX</button>
+                </div>
+                
+                <!-- User menu (shown when logged in) -->
+                <div class="user-menu" style="display: none;">
+                    <div class="user-avatar" id="userAvatar">
+                        <span>U</span>
+                    </div>
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="user-info">
+                            <span class="user-name">User Name</span>
+                            <span class="user-campus">University</span>
+                        </div>
+                        <hr>
+                        <a href="#" class="dropdown-item" data-action="my-items">
+                            <i class="fas fa-box"></i>
+                            My Items
+                        </a>
+                        <a href="#" class="dropdown-item" data-action="saved-items">
+                            <i class="fas fa-heart"></i>
+                            Saved Items
+                        </a>
+                        <a href="#" class="dropdown-item" data-action="settings">
+                            <i class="fas fa-cog"></i>
+                            Settings
+                        </a>
+                        <hr>
+                        <a href="#" class="dropdown-item" data-action="logout">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mobile-menu-toggle" id="mobileMenuToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Hero Section -->
+        <section id="home" class="hero section active">
+            <div class="hero-content">
+                <div class="hero-left">
+                    <h1 class="hero-title">
+                        Buy & Sell <span class="gradient-text">Campus Items</span> 
+                        with <span class="gradient-text">AI Power</span>
+                    </h1>
+                    <p class="hero-subtitle">
+                        The smart marketplace for students. Upload photos, get AI descriptions, 
+                        find perfect prices, and connect with your campus community.
+                    </p>
+                    <div class="hero-actions">
+                        <button class="btn btn-primary btn-large" id="heroExploreBtn">
+                            <i class="fas fa-compass"></i>
+                            Explore Items
+                        </button>
+                        <button class="btn btn-outline btn-large" id="heroSellBtn">
+                            <i class="fas fa-camera"></i>
+                            Sell with AI
+                        </button>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat">
+                            <span class="stat-number">10K+</span>
+                            <span class="stat-label">Items Listed</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">5K+</span>
+                            <span class="stat-label">Happy Students</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">50+</span>
+                            <span class="stat-label">Universities</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-right">
+                    <div class="hero-image">
+                        <div class="floating-card card-1">
+                            <img src="https://via.placeholder.com/100x80/3b82f6/ffffff?text=📱" alt="Phone">
+                            <div class="card-info">
+                                <h4>iPhone 13</h4>
+                                <p>₹45,000</p>
+                            </div>
+                        </div>
+                        <div class="floating-card card-2">
+                            <img src="https://via.placeholder.com/100x80/10b981/ffffff?text=📚" alt="Book">
+                            <div class="card-info">
+                                <h4>Textbooks</h4>
+                                <p>₹500</p>
+                            </div>
+                        </div>
+                        <div class="floating-card card-3">
+                            <img src="https://via.placeholder.com/100x80/f59e0b/ffffff?text=💻" alt="Laptop">
+                            <div class="card-info">
+                                <h4>MacBook Pro</h4>
+                                <p>₹95,000</p>
+                            </div>
+                        </div>
+                        <div class="ai-badge">
+                            <i class="fas fa-brain"></i>
+                            <span>AI Powered</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Discover Section -->
+        <section id="discover" class="discover section">
+            <div class="section-header">
+                <h2>Discover Items</h2>
+                <p>Find exactly what you need with smart filters and AI search</p>
+            </div>
+
+            <!-- Filters -->
+            <div class="filters-container">
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-filter="all">All Items</button>
+                    <button class="filter-tab" data-filter="trending">Trending</button>
+                    <button class="filter-tab" data-filter="recent">Recently Added</button>
+                    <button class="filter-tab" data-filter="nearby">Nearby</button>
+                </div>
+                
+                <div class="filter-chips">
+                    <button class="filter-chip" data-category="Laptops">
+                        <i class="fas fa-laptop"></i>
+                        Laptops
+                    </button>
+                    <button class="filter-chip" data-category="Textbooks">
+                        <i class="fas fa-book"></i>
+                        Textbooks
+                    </button>
+                    <button class="filter-chip" data-category="Electronics">
+                        <i class="fas fa-microchip"></i>
+                        Electronics
+                    </button>
+                    <button class="filter-chip" data-category="Furniture">
+                        <i class="fas fa-chair"></i>
+                        Furniture
+                    </button>
+                    <button class="filter-chip" data-condition="Excellent">
+                        <i class="fas fa-star"></i>
+                        Excellent
+                    </button>
+                    <button class="filter-chip" data-verified="true">
+                        <i class="fas fa-check-circle"></i>
+                        Verified
+                    </button>
+                </div>
+
+                <div class="filter-actions">
+                    <button class="btn btn-outline" id="advancedFiltersBtn">
+                        <i class="fas fa-sliders-h"></i>
+                        More Filters
+                    </button>
+                    <button class="btn btn-outline" id="clearFiltersBtn">
+                        <i class="fas fa-times"></i>
+                        Clear All
+                    </button>
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="products-container">
+                <div class="products-grid" id="productsGrid">
+                    <!-- Products will be loaded here dynamically -->
+                </div>
+                
+                <div class="load-more-container">
+                    <button class="btn btn-outline" id="loadMoreBtn" style="display: none;">
+                        Load More Items
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sell Section -->
+        <section id="sell" class="sell section">
+            <div class="section-header">
+                <h2>Sell Your Items</h2>
+                <p>Upload photos and let AI create perfect listings for you</p>
+            </div>
+
+            <div class="sell-container">
+                <div class="sell-form-container">
+                    <form class="sell-form" id="sellForm">
+                        <div class="form-step active" data-step="1">
+                            <h3>
+                                <i class="fas fa-camera"></i>
+                                Step 1: Upload Photos
+                            </h3>
+                            
+                            <div class="image-upload-area" id="imageUploadArea">
+                                <div class="upload-placeholder">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <h4>Upload Product Photos</h4>
+                                    <p>Drag & drop images or click to browse</p>
+                                    <p class="upload-hint">AI will analyze your photos and suggest details</p>
+                                </div>
+                                <input type="file" id="imageInput" multiple accept="image/*" style="display: none;">
+                            </div>
+                            
+                            <div class="image-preview-container" id="imagePreviewContainer" style="display: none;"></div>
+                            
+                            <div class="step-actions">
+                                <button type="button" class="btn btn-primary" id="analyzeImagesBtn" disabled>
+                                    <i class="fas fa-brain"></i>
+                                    Analyze with AI
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-step" data-step="2">
+                            <h3>
+                                <i class="fas fa-edit"></i>
+                                Step 2: Item Details
+                            </h3>
+                            
+                            <div class="ai-suggestions" id="aiSuggestions" style="display: none;">
+                                <h4>
+                                    <i class="fas fa-magic"></i>
+                                    AI Suggestions
+                                </h4>
+                                <div class="suggestions-content"></div>
+                            </div>
+                            
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="itemTitle">Title *</label>
+                                    <input type="text" id="itemTitle" name="title" required maxlength="100">
+                                    <div class="ai-assist">
+                                        <button type="button" class="ai-assist-btn" data-field="title">
+                                            <i class="fas fa-brain"></i>
+                                            AI Enhance
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="itemCategory">Category *</label>
+                                    <select id="itemCategory" name="category" required>
+                                        <option value="">Select category</option>
+                                        <option value="Textbooks">Textbooks</option>
+                                        <option value="Electronics">Electronics</option>
+                                        <option value="Laptops">Laptops</option>
+                                        <option value="Furniture">Furniture</option>
+                                        <option value="Clothing">Clothing</option>
+                                        <option value="Sports">Sports</option>
+                                        <option value="Academic">Academic</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="itemCondition">Condition *</label>
+                                    <select id="itemCondition" name="condition" required>
+                                        <option value="">Select condition</option>
+                                        <option value="New">New</option>
+                                        <option value="Excellent">Excellent</option>
+                                        <option value="Good">Good</option>
+                                        <option value="Fair">Fair</option>
+                                        <option value="Poor">Poor</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="itemPrice">Price (₹) *</label>
+                                    <input type="number" id="itemPrice" name="price" required min="1">
+                                    <div class="ai-assist">
+                                        <button type="button" class="ai-assist-btn" data-field="price">
+                                            <i class="fas fa-brain"></i>
+                                            Suggest Price
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="originalPrice">Original Price (₹)</label>
+                                    <input type="number" id="originalPrice" name="originalPrice" min="1">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="itemLocation">Location *</label>
+                                    <input type="text" id="itemLocation" name="location" required placeholder="e.g., Hostel Block A">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="itemCampus">Campus *</label>
+                                    <select id="itemCampus" name="campus" required>
+                                        <option value="">Select campus</option>
+                                        <option value="VIT Pune">VIT Pune</option>
+                                        <option value="IIT Bombay">IIT Bombay</option>
+                                        <option value="Delhi University">Delhi University</option>
+                                        <option value="BITS Pilani">BITS Pilani</option>
+                                        <option value="Manipal University">Manipal University</option>
+                                        <option value="Anna University">Anna University</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="itemDescription">Description</label>
+                                <textarea id="itemDescription" name="description" rows="4" 
+                                          placeholder="Describe your item..."></textarea>
+                                <div class="ai-assist">
+                                    <button type="button" class="ai-assist-btn" data-field="description">
+                                        <i class="fas fa-brain"></i>
+                                        Enhance Description
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="itemTags">Tags</label>
+                                <input type="text" id="itemTags" name="tags" 
+                                       placeholder="e.g., programming, study, portable">
+                                <small>Separate tags with commas</small>
+                            </div>
+                            
+                            <div class="form-options">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="negotiable" name="negotiable" checked>
+                                    <span class="checkmark"></span>
+                                    Price is negotiable
+                                </label>
+                                
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="urgent" name="urgent">
+                                    <span class="checkmark"></span>
+                                    Urgent sale
+                                </label>
+                            </div>
+                            
+                            <div class="step-actions">
+                                <button type="button" class="btn btn-outline" id="backToStep1">
+                                    <i class="fas fa-arrow-left"></i>
+                                    Back
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i>
+                                    List Item
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="sell-preview">
+                    <h3>Preview</h3>
+                    <div class="preview-card" id="previewCard">
+                        <div class="preview-placeholder">
+                            <i class="fas fa-eye"></i>
+                            <p>Preview will appear here as you fill out the form</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Chats Section -->
+        <section id="chats" class="chats section">
+            <div class="section-header">
+                <h2>Messages</h2>
+                <p>Chat with buyers and sellers</p>
+            </div>
+            
+            <div class="chats-container">
+                <div class="chats-list" id="chatsList">
+                    <!-- Chat conversations will be loaded here -->
+                </div>
+                
+                <div class="chat-window" id="chatWindow" style="display: none;">
+                    <!-- Active chat conversation will be shown here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Profile Section -->
+        <section id="profile" class="profile section">
+            <div class="section-header">
+                <h2>Profile</h2>
+                <p>Manage your account and listings</p>
+            </div>
+            
+            <div class="profile-container" id="profileContainer">
+                <!-- Profile content will be loaded here -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>CampX</h3>
+                <p>AI-powered campus marketplace for students</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-linkedin"></i></a>
+                </div>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Features</h4>
+                <ul>
+                    <li><a href="#">AI Image Analysis</a></li>
+                    <li><a href="#">Smart Pricing</a></li>
+                    <li><a href="#">Real-time Chat</a></li>
+                    <li><a href="#">Campus Communities</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="#">Help Center</a></li>
+                    <li><a href="#">Safety Guidelines</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                    <li><a href="#">Report Issue</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                    <li><a href="#">Cookie Policy</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2025 CampX. Made with ❤️ for students.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/components.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

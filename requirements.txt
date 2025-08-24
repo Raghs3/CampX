@@ -1,0 +1,47 @@
+
+# CampX - Installation Requirements
+
+## Prerequisites
+- Node.js (v16 or higher) - Download from https://nodejs.org/
+- MongoDB (Community Edition) - Download from https://www.mongodb.com/try/download/community
+  OR MongoDB Atlas account - Sign up at https://www.mongodb.com/atlas
+- Git - Download from https://git-scm.com/
+
+## Required Accounts & API Keys
+
+### 1. MongoDB
+- Local MongoDB OR MongoDB Atlas cluster
+- Connection string for .env file
+
+### 2. Cloudinary (Image Hosting)
+- Sign up at: https://cloudinary.com/
+- Required: Cloud Name, API Key, API Secret
+
+### 3. OpenAI API (AI Features)
+- Sign up at: https://platform.openai.com/
+- Required: API Key with credits
+
+## Installation Steps
+
+1. Clone repository
+2. Install Node.js dependencies:
+   ```
+   cd backend
+   npm install
+   ```
+3. Copy .env.example to .env and fill in your values
+4. Start MongoDB service (if using local MongoDB)
+5. Run the application:
+   ```
+   npm run dev
+   ```
+
+## Environment Variables Required
+
+See .env.example file for all required environment variables.
+
+## Optional Python Dependencies
+If you want to extend with Python AI services:
+```
+pip install flask openai pillow python-dotenv
+```
