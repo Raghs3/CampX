@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudXchange - Student Marketplace</title>
+    <link rel="stylesheet" href="styles/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-text">StudXchange</span>
+            </div>
+            <div class="nav-menu" id="navMenu">
+                <a href="#home" class="nav-link">Home</a>
+                <a href="#discover" class="nav-link">Discover</a>
+                <a href="#sell" class="nav-link">Sell</a>
+                <a href="#profile" class="nav-link">Profile</a>
+            </div>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <div class="search-container">
+                    <input type="text" class="search-input" placeholder="Search products..." id="searchInput">
+                    <button class="search-btn">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <div class="user-avatar">
+                    <span>JD</span>
+                </div>
+            </div>
+            <div class="mobile-menu-toggle" id="mobileMenuToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <div class="hero-left">
+                <h1 class="hero-title">
+                    Buy & Sell <span class="gradient-text">Student Items</span> 
+                    <br>with Confidence
+                </h1>
+                <p class="hero-subtitle">
+                    Connect with fellow students, discover amazing deals, and sell your items quickly. 
+                    The trusted marketplace for the student community.
+                </p>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">10K+</span>
+                        <span class="stat-label">Active Students</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">50K+</span>
+                        <span class="stat-label">Items Sold</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">500+</span>
+                        <span class="stat-label">Universities</span>
+                    </div>
+                </div>
+                <div class="hero-actions">
+                    <button class="btn btn--primary btn--lg">Start Shopping</button>
+                    <button class="btn btn--outline btn--lg">Sell Your Item</button>
+                </div>
+            </div>
+            <div class="hero-right">
+                <div class="floating-card card-1">💻</div>
+                <div class="floating-card card-2">📚</div>
+                <div class="floating-card card-3">🎧</div>
+                <div class="floating-card card-4">🪑</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories Section -->
+    <section class="categories-section">
+        <div class="container">
+            <h2 class="section-title">Explore Categories</h2>
+            <div class="categories-bubbles" id="categoriesBubbles">
+                <!-- Categories will be populated by JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Filter Section -->
+    <section class="filter-section">
+        <div class="container">
+            <div class="filter-tabs">
+                <button class="filter-tab active" data-filter="all">All Items</button>
+                <button class="filter-tab" data-filter="trending">Trending</button>
+                <button class="filter-tab" data-filter="recent">Recently Added</button>
+                <button class="filter-tab" data-filter="nearby">Nearby</button>
+            </div>
+            <div class="filter-chips" id="filterChips">
+                <button class="filter-chip" data-status="Available">Available</button>
+                <button class="filter-chip" data-condition="Excellent">Excellent</button>
+                <button class="filter-chip" data-verified="true">Verified Sellers</button>
+                <button class="filter-chip" data-category="Laptops">Laptops</button>
+                <button class="filter-chip" data-category="Textbooks">Textbooks</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Section -->
+    <section id="discover" class="products-section">
+        <div class="container">
+            <div class="products-masonry" id="productsMasonry">
+                <!-- Products will be populated by JavaScript -->
+            </div>
+            <div class="loading-spinner" id="loadingSpinner">
+                <div class="spinner"></div>
+                <p>Loading more products...</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick View Modal -->
+    <div class="modal hidden" id="quickViewModal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content quick-view-content">
+            <button class="modal-close" id="modalClose">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="quick-view-body" id="quickViewBody">
+                <!-- Quick view content will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Buttons -->
+    <div class="fab-container">
+        <button class="fab fab-primary" id="fabSell" title="Sell Item">
+            <i class="fas fa-plus"></i>
+        </button>
+        <button class="fab fab-secondary" id="fabWishlist" title="Wishlist">
+            <i class="fas fa-heart"></i>
+            <span class="fab-badge" id="wishlistCount">0</span>
+        </button>
+        <button class="fab fab-secondary" id="fabChat" title="Messages">
+            <i class="fas fa-comment"></i>
+        </button>
+    </div>
+
+    <!-- Sell Modal -->
+    <div class="modal hidden" id="sellModal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content sell-modal-content">
+            <button class="modal-close" id="sellModalClose">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="sell-wizard">
+                <h2>List Your Item</h2>
+                <form class="sell-form">
+                    <div class="form-group">
+                        <label class="form-label">Product Title</label>
+                        <input type="text" class="form-control" placeholder="Enter product title">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <select class="form-control">
+                            <option>Select Category</option>
+                            <option>Laptops</option>
+                            <option>Electronics</option>
+                            <option>Textbooks</option>
+                            <option>Audio</option>
+                            <option>Furniture</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Price (₹)</label>
+                        <input type="number" class="form-control" placeholder="Enter price">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Condition</label>
+                        <select class="form-control">
+                            <option>New</option>
+                            <option>Excellent</option>
+                            <option>Good</option>
+                            <option>Fair</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" rows="4" placeholder="Describe your item"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn--secondary">Save as Draft</button>
+                        <button type="submit" class="btn btn--primary">List Item</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

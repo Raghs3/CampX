@@ -1,0 +1,7 @@
+
+# Node dependencies
+node_modules/
+# Python virtual envs
+venv/
+__pycache__/
+.env
