@@ -928,7 +928,7 @@ const setupMobileMenu = () => {
 
 // Application Initialization
 const initializeApp = () => {
-  console.log('🚀 StudXchange App Initializing...');
+  console.log('🚀 CampX App Initializing...');
   
   try {
     // Initialize theme
@@ -951,11 +951,11 @@ const initializeApp = () => {
     // Update wishlist count
     updateWishlistCount();
     
-    console.log('✅ StudXchange App Ready!');
+    console.log('✅ CampX App Ready!');
     
     // Welcome message
     setTimeout(() => {
-      showToast('Welcome to StudXchange! 🎓✨', 'success');
+      showToast('Welcome to CampX! 🎓✨', 'success');
     }, 1500);
     
   } catch (error) {
