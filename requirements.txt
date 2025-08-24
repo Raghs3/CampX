@@ -1,0 +1,5 @@
+
+# Python dependencies for optional AI microservice
+flask
+openai
+pillow
