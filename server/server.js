@@ -148,95 +148,141 @@ const requireVerifiedEmail = requireAuth;
 // ====== EMAIL VERIFICATION FUNCTION ======
 async function sendVerificationEmail(email, token, fullName) {
   try {
-    // Debug: Check environment variables
-    console.log('📧 Email Configuration Check:');
-    console.log('  EMAIL_SERVICE:', process.env.EMAIL_SERVICE ? '✓' : '✗');
-    console.log('  EMAIL_USER:', process.env.EMAIL_USER ? '✓' : '✗');
-    console.log('  EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD ? '✓' : '✗');
+    const baseUrl = process.env.BASE_URL || `http://${HOST}:${PORT}`;
+    const verificationLink = `${baseUrl}/verify-email?token=${token}`;
     
-    // Check if email service is configured
-    if (!process.env.EMAIL_SERVICE || !process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-      console.warn('⚠️ Email service not configured. Verification link:');
-      const baseUrl = process.env.BASE_URL || `http://${HOST}:${PORT}`;
-      console.warn(`${baseUrl}/verify-email?token=${token}`);
-      return false;
-    }
-
-    const nodemailer = require('nodemailer');
-    
-    console.log('📨 Creating email transporter...');
-    
-    // Create transporter configuration
-    let transportConfig;
-    
-    // Check if using SendGrid (recommended for Render)
+    // Check if SendGrid is configured
     if (process.env.SENDGRID_API_KEY) {
-      // SendGrid configuration (works on Render free tier)
-      const nodemailerSendgrid = require('nodemailer-sendgrid');
-      transportConfig = nodemailerSendgrid({
-        apiKey: process.env.SENDGRID_API_KEY
-      });
-    } else if (process.env.NODE_ENV === 'production') {
-      // For production without SendGrid, disable email verification
-      console.warn('⚠️ SENDGRID_API_KEY not set. Email verification disabled in production.');
-      console.warn('📋 To enable emails on Render:');
-      console.warn('   1. Sign up at https://sendgrid.com (free tier: 100 emails/day)');
-      console.warn('   2. Create an API key');
-      console.warn('   3. Add SENDGRID_API_KEY to Render environment variables');
-      const baseUrl = process.env.BASE_URL || `http://${HOST}:${PORT}`;
-      console.warn(`   Verification link: ${baseUrl}/verify-email?token=${token}`);
-      return false;
-    } else {
-      // For local development, use Gmail/Outlook
-      transportConfig = {
-        service: process.env.EMAIL_SERVICE, // 'gmail', 'outlook', etc.
+      // Use SendGrid directly (recommended for production)
+      const sgMail = require('@sendgrid/mail');
+      sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+      
+      const msg = {
+        to: email,
+        from: process.env.SENDGRID_SENDER_EMAIL || 'noreply@campxmarketplace.com',
+        subject: 'Verify Your Email - CampX Marketplace',
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px 0;">
+              <tr>
+                <td align="center">
+                  <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden;">
+                    <!-- Header -->
+                    <tr>
+                      <td style="background: linear-gradient(135deg, #7b2ff7 0%, #f107a3 100%); padding: 40px 20px; text-align: center;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 28px;">🎓 CampX Marketplace</h1>
+                      </td>
+                    </tr>
+                    <!-- Content -->
+                    <tr>
+                      <td style="padding: 40px 30px;">
+                        <h2 style="color: #333; margin-top: 0;">Welcome, ${fullName}!</h2>
+                        <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                          Thank you for joining CampX Marketplace. To complete your registration and start buying and selling on our platform, please verify your email address.
+                        </p>
+                        <!-- Button -->
+                        <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+                          <tr>
+                            <td align="center">
+                              <a href="${verificationLink}" 
+                                 style="background-color: #7b2ff7; color: #ffffff; padding: 14px 40px; text-decoration: none; border-radius: 6px; display: inline-block; font-size: 16px; font-weight: bold;">
+                                Verify Email Address
+                              </a>
+                            </td>
+                          </tr>
+                        </table>
+                        <p style="color: #999; font-size: 14px; line-height: 1.6;">
+                          Or copy and paste this link into your browser:<br>
+                          <a href="${verificationLink}" style="color: #7b2ff7; word-break: break-all;">${verificationLink}</a>
+                        </p>
+                        <p style="color: #999; font-size: 14px; line-height: 1.6;">
+                          This link will expire in 1 hour for security purposes.
+                        </p>
+                      </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                      <td style="background-color: #f8f8f8; padding: 20px 30px; text-align: center;">
+                        <p style="color: #999; font-size: 12px; margin: 0;">
+                          If you didn't create this account, please ignore this email.
+                        </p>
+                        <p style="color: #999; font-size: 12px; margin: 10px 0 0 0;">
+                          © 2025 CampX Marketplace. All rights reserved.
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </body>
+          </html>
+        `
+      };
+      
+      await sgMail.send(msg);
+      console.log(`✅ Verification email sent to ${email} via SendGrid`);
+      return true;
+      
+    } else if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+      // Fallback to nodemailer for local development
+      const nodemailer = require('nodemailer');
+      const transporter = nodemailer.createTransport({
+        service: process.env.EMAIL_SERVICE || 'gmail',
         auth: {
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASSWORD
         }
+      });
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Verify Your Email - CampX Marketplace',
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #7b2ff7;">Welcome to CampX Marketplace, ${fullName}!</h2>
+            <p>Thank you for signing up. Please verify your email address to complete your registration.</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${verificationLink}" 
+                 style="background-color: #7b2ff7; color: white; padding: 12px 30px; 
+                        text-decoration: none; border-radius: 5px; display: inline-block;">
+                Verify Email Address
+              </a>
+            </div>
+            <p style="color: #666; font-size: 14px;">
+              Or copy and paste this link in your browser:<br>
+              <a href="${verificationLink}">${verificationLink}</a>
+            </p>
+            <p style="color: #666; font-size: 12px; margin-top: 30px;">
+              This link will expire in 1 hour. If you didn't create an account, please ignore this email.
+            </p>
+          </body>
+          </html>
+        `
       };
+
+      await transporter.sendMail(mailOptions);
+      console.log(`✅ Verification email sent to ${email} via nodemailer`);
+      return true;
+      
+    } else {
+      // No email service configured
+      console.warn('⚠️ Email service not configured. Verification link:');
+      console.warn(`${verificationLink}`);
+      return false;
     }
     
-    const transporter = nodemailer.createTransport(transportConfig);
-
-    // Verification link
-    const baseUrl = process.env.BASE_URL || `http://${HOST}:${PORT}`;
-    const verificationLink = `${baseUrl}/verify-email?token=${token}`;
-
-    // Email options
-    const mailOptions = {
-      from: process.env.SENDGRID_SENDER_EMAIL || process.env.EMAIL_USER || 'noreply@campx.com',
-      to: email,
-      subject: 'CampX Marketplace - Verify Your Email',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #7b2ff7;">Welcome to CampX Marketplace, ${fullName}!</h2>
-          <p>Thank you for signing up. Please verify your email address to complete your registration.</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${verificationLink}" 
-               style="background-color: #7b2ff7; color: white; padding: 12px 30px; 
-                      text-decoration: none; border-radius: 5px; display: inline-block;">
-              Verify Email Address
-            </a>
-          </div>
-          <p style="color: #666; font-size: 14px;">
-            Or copy and paste this link in your browser:<br>
-            <a href="${verificationLink}">${verificationLink}</a>
-          </p>
-          <p style="color: #666; font-size: 12px; margin-top: 30px;">
-            This link will expire in 24 hours. If you didn't create an account, please ignore this email.
-          </p>
-        </div>
-      `
-    };
-
-    // Send email
-    await transporter.sendMail(mailOptions);
-    console.log('✅ Verification email sent to:', email);
-    return true;
   } catch (error) {
     console.error('❌ Failed to send verification email:', error.message);
-    console.error('   Error details:', error);
     const baseUrl = process.env.BASE_URL || `http://${HOST}:${PORT}`;
     console.warn(`   Verification link: ${baseUrl}/verify-email?token=${token}`);
     return false;
@@ -391,8 +437,8 @@ app.post("/api/register", async (req, res) => {
   if (!full_name || !email || !password)
     return res.status(400).json({ message: "All fields required" });
 
-  // Validate VIT email domain
-  if (!email.toLowerCase().endsWith('@vit.edu')) {
+  // Validate VIT email domain (only in production)
+  if (process.env.NODE_ENV === 'production' && !email.toLowerCase().endsWith('@vit.edu')) {
     return res.status(400).json({ 
       message: "Only VIT students can register. Please use your @vit.edu email address." 
     });
@@ -418,8 +464,8 @@ app.post("/api/register", async (req, res) => {
     const verification_token = crypto.randomBytes(32).toString('hex');
     const token_expires = Date.now() + (24 * 60 * 60 * 1000); // 24 hours from now
 
-    // Auto-verify users in production if no email service is configured
-    const autoVerify = process.env.NODE_ENV === 'production' ? 1 : 0;
+    // Auto-verify in local development, require verification in production
+    const autoVerify = process.env.NODE_ENV === 'production' ? 0 : 1;
 
     const query = `
       INSERT INTO users (full_name, email, password_hash, phone, email_verified, verification_token, token_expires)
@@ -439,12 +485,24 @@ app.post("/api/register", async (req, res) => {
         return res.status(500).json({ message: "Database error: " + err.message });
       }
       
-      // Signup successful - users are auto-verified (no email verification needed)
+      // Signup successful - send verification email
       console.log(`✅ User ${email} registered successfully`);
-      res.json({ 
-        message: "Signup successful! You can now login.",
-        success: true
-      });
+      
+      // Send verification email
+      try {
+        await sendVerificationEmail(email, verification_token);
+        res.json({ 
+          message: "Signup successful! Please check your email to verify your account.",
+          success: true
+        });
+      } catch (emailError) {
+        console.error("❌ Failed to send verification email:", emailError);
+        // Still return success - user can login after verifying later
+        res.json({ 
+          message: "Signup successful! Verification email sent (check spam folder).",
+          success: true
+        });
+      }
     });
   });
 });
@@ -461,7 +519,15 @@ app.post("/api/login", (req, res) => {
     const valid = bcrypt.compareSync(password, user.password_hash);
     if (!valid) return res.status(401).json({ message: "Invalid password!" });
 
-    // Save session (no email verification check needed)
+    // Check if email is verified (only required in production)
+    if (process.env.NODE_ENV === 'production' && !user.email_verified) {
+      return res.status(403).json({ 
+        message: "Please verify your email before logging in. Check your inbox for the verification link.",
+        emailNotVerified: true
+      });
+    }
+
+    // Save session
     req.session.user = {
       user_id: user.user_id,
       full_name: user.full_name,
@@ -507,21 +573,146 @@ app.post("/api/forgot-password", (req, res) => {
     db.run(
       'UPDATE users SET verification_token = ?, token_expires = ? WHERE user_id = ?',
       [reset_token, token_expires, user.user_id],
-      (updateErr) => {
+      async (updateErr) => {
         if (updateErr) {
           return res.status(500).json({ message: "Failed to generate reset token" });
         }
 
-        // In production, print the link in logs (since we don't have email)
         const baseUrl = process.env.BASE_URL || `http://${HOST}:${PORT}`;
         const resetLink = `${baseUrl}/reset-password.html?token=${reset_token}`;
         
-        console.log('🔑 Password reset link for', email);
-        console.log('   Link:', resetLink);
-        console.log('   Expires in 1 hour');
+        // Send email with SendGrid or nodemailer
+        try {
+          if (process.env.SENDGRID_API_KEY) {
+            // Use SendGrid
+            const sgMail = require('@sendgrid/mail');
+            sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+            
+            const msg = {
+              to: email,
+              from: process.env.SENDGRID_SENDER_EMAIL || 'noreply@campxmarketplace.com',
+              subject: 'Reset Your Password - CampX Marketplace',
+              html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                  <meta charset="UTF-8">
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                </head>
+                <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+                  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px 0;">
+                    <tr>
+                      <td align="center">
+                        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden;">
+                          <!-- Header -->
+                          <tr>
+                            <td style="background: linear-gradient(135deg, #7b2ff7 0%, #f107a3 100%); padding: 40px 20px; text-align: center;">
+                              <h1 style="color: #ffffff; margin: 0; font-size: 28px;">🔐 Password Reset</h1>
+                            </td>
+                          </tr>
+                          <!-- Content -->
+                          <tr>
+                            <td style="padding: 40px 30px;">
+                              <h2 style="color: #333; margin-top: 0;">Hi ${user.full_name},</h2>
+                              <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                                We received a request to reset your password for your CampX Marketplace account. Click the button below to create a new password.
+                              </p>
+                              <!-- Button -->
+                              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+                                <tr>
+                                  <td align="center">
+                                    <a href="${resetLink}" 
+                                       style="background-color: #7b2ff7; color: #ffffff; padding: 14px 40px; text-decoration: none; border-radius: 6px; display: inline-block; font-size: 16px; font-weight: bold;">
+                                      Reset Password
+                                    </a>
+                                  </td>
+                                </tr>
+                              </table>
+                              <p style="color: #999; font-size: 14px; line-height: 1.6;">
+                                Or copy and paste this link into your browser:<br>
+                                <a href="${resetLink}" style="color: #7b2ff7; word-break: break-all;">${resetLink}</a>
+                              </p>
+                              <p style="color: #999; font-size: 14px; line-height: 1.6;">
+                                <strong>This link will expire in 1 hour.</strong>
+                              </p>
+                              <p style="color: #999; font-size: 14px; line-height: 1.6;">
+                                If you didn't request a password reset, please ignore this email or contact support if you have concerns.
+                              </p>
+                            </td>
+                          </tr>
+                          <!-- Footer -->
+                          <tr>
+                            <td style="background-color: #f8f8f8; padding: 20px 30px; text-align: center;">
+                              <p style="color: #999; font-size: 12px; margin: 0;">
+                                For security reasons, this link can only be used once.
+                              </p>
+                              <p style="color: #999; font-size: 12px; margin: 10px 0 0 0;">
+                                © 2025 CampX Marketplace. All rights reserved.
+                              </p>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </body>
+                </html>
+              `
+            };
+            
+            await sgMail.send(msg);
+            console.log(`✅ Password reset email sent to ${email} via SendGrid`);
+            
+          } else if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+            // Fallback to nodemailer
+            const nodemailer = require('nodemailer');
+            const transporter = nodemailer.createTransport({
+              service: process.env.EMAIL_SERVICE || 'gmail',
+              auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASSWORD
+              }
+            });
+
+            await transporter.sendMail({
+              from: process.env.EMAIL_USER,
+              to: email,
+              subject: 'Reset Your Password - CampX Marketplace',
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                  <h2 style="color: #7b2ff7;">Password Reset Request</h2>
+                  <p>Hi ${user.full_name},</p>
+                  <p>Click the button below to reset your password:</p>
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="${resetLink}" 
+                       style="background-color: #7b2ff7; color: white; padding: 12px 30px; 
+                              text-decoration: none; border-radius: 5px; display: inline-block;">
+                      Reset Password
+                    </a>
+                  </div>
+                  <p style="color: #666; font-size: 14px;">
+                    Or copy this link: <a href="${resetLink}">${resetLink}</a>
+                  </p>
+                  <p style="color: #666; font-size: 12px;">
+                    This link expires in 1 hour. If you didn't request this, please ignore this email.
+                  </p>
+                </div>
+              `
+            });
+            console.log(`✅ Password reset email sent to ${email} via nodemailer`);
+            
+          } else {
+            console.log('🔑 Password reset link for', email);
+            console.log('   Link:', resetLink);
+          }
+          
+        } catch (emailError) {
+          console.error('❌ Failed to send password reset email:', emailError.message);
+          console.log('   Reset link:', resetLink);
+        }
 
         res.json({ 
-          message: "Password reset instructions have been sent. Check the server logs for the reset link.",
+          message: "If an account with that email exists, a password reset link has been sent.",
           success: true,
           resetLink: process.env.NODE_ENV !== 'production' ? resetLink : undefined
         });
@@ -641,6 +832,121 @@ app.put("/api/profile", requireAuth, async (req, res) => {
     console.error('Error updating profile:', error);
     res.status(500).json({ message: "Server error" });
   }
+});
+
+// Delete own account (user-facing)
+app.delete("/api/delete-account", requireAuth, (req, res) => {
+  const userId = req.session.user.user_id;
+  console.log(`🗑️ User ${userId} requested account deletion`);
+
+  // Same comprehensive deletion as admin delete, but for current user
+  // 1. Delete reviews for user's products
+  db.run('DELETE FROM reviews WHERE product_id IN (SELECT product_id FROM products WHERE seller_id = ?)', [userId], (reviewsProdErr) => {
+    if (reviewsProdErr && !reviewsProdErr.message.includes('no such table')) {
+      console.error('Error at step 1:', reviewsProdErr.message);
+      return res.status(500).json({ message: "Error deleting product reviews" });
+    }
+    console.log('✓ Step 1 complete');
+
+    // 2. Delete sold_items for user's products
+    db.run('DELETE FROM sold_items WHERE product_id IN (SELECT product_id FROM products WHERE seller_id = ?)', [userId], (soldProdErr) => {
+      if (soldProdErr && !soldProdErr.message.includes('no such table')) {
+        console.error('Error at step 2:', soldProdErr.message);
+        return res.status(500).json({ message: "Error deleting product sales" });
+      }
+      console.log('✓ Step 2 complete');
+
+      // 3. Delete wishlist entries for user's products
+      db.run('DELETE FROM wishlist WHERE product_id IN (SELECT product_id FROM products WHERE seller_id = ?)', [userId], (wishlistErr) => {
+        if (wishlistErr && !wishlistErr.message.includes('no such table')) {
+          console.error('Error at step 3:', wishlistErr.message);
+          return res.status(500).json({ message: "Error deleting wishlist entries" });
+        }
+        console.log('✓ Step 3 complete');
+
+        // 4. Delete messages for user's products
+        db.run('DELETE FROM messages WHERE item_id IN (SELECT product_id FROM products WHERE seller_id = ?)', [userId], (prodMsgErr) => {
+          if (prodMsgErr && !prodMsgErr.message.includes('no such table')) {
+            console.error('Error at step 4:', prodMsgErr.message);
+            return res.status(500).json({ message: "Error deleting product messages" });
+          }
+          console.log('✓ Step 4 complete');
+
+          // 5. Delete user's products
+          db.run('DELETE FROM products WHERE seller_id = ?', [userId], (prodErr) => {
+            if (prodErr) {
+              console.error('Error at step 5:', prodErr.message);
+              return res.status(500).json({ message: "Error deleting products" });
+            }
+            console.log('✓ Step 5 complete');
+
+            // 6. Delete reviews where user is seller or buyer
+            db.run('DELETE FROM reviews WHERE seller_id = ? OR buyer_id = ?', [userId, userId], (reviewsErr) => {
+              if (reviewsErr && !reviewsErr.message.includes('no such table')) {
+                console.error('Error at step 6:', reviewsErr.message);
+                return res.status(500).json({ message: "Error deleting user reviews" });
+              }
+              console.log('✓ Step 6 complete');
+
+              // 7. Delete sold_items where user is seller or buyer
+              db.run('DELETE FROM sold_items WHERE seller_id = ? OR buyer_id = ?', [userId, userId], (soldErr) => {
+                if (soldErr && !soldErr.message.includes('no such table')) {
+                  console.error('Error at step 7:', soldErr.message);
+                  return res.status(500).json({ message: "Error deleting sales records" });
+                }
+                console.log('✓ Step 7 complete');
+
+                // 8. Delete user's wishlist entries
+                db.run('DELETE FROM wishlist WHERE user_id = ?', [userId], (wishErr) => {
+                  if (wishErr && !wishErr.message.includes('no such table')) {
+                    console.error('Error at step 8:', wishErr.message);
+                    return res.status(500).json({ message: "Error deleting wishlist" });
+                  }
+                  console.log('✓ Step 8 complete');
+
+                  console.log('✓ Step 8 complete');
+
+                  // 9. Delete user's messages
+                  db.run('DELETE FROM messages WHERE sender_id = ? OR receiver_id = ?', [userId, userId], (msgErr) => {
+                    if (msgErr) {
+                      console.error('Error at step 9:', msgErr.message);
+                      return res.status(500).json({ message: "Error deleting messages" });
+                    }
+                    console.log('✓ Step 9 complete');
+
+                    // 10. Delete user's success stories (skip if table doesn't exist)
+                    db.run('DELETE FROM success_stories WHERE student_id = ?', [userId], (storiesErr) => {
+                      // Ignore "no such table" errors for optional tables
+                      if (storiesErr && !storiesErr.message.includes('no such table')) {
+                        console.error('Error at step 10:', storiesErr.message);
+                        return res.status(500).json({ message: "Error deleting success stories" });
+                      }
+                      console.log('✓ Step 10 complete');
+
+                      // 11. Finally, delete the user account
+                      db.run('DELETE FROM users WHERE user_id = ?', [userId], (userErr) => {
+                        if (userErr) {
+                          console.error('Error at step 11:', userErr.message);
+                          return res.status(500).json({ message: "Error deleting user account" });
+                        }
+                        console.log('✓ Step 11 complete');
+
+                        // Destroy session after successful deletion
+                        req.session.destroy(() => {
+                          console.log(`✅ Account deleted successfully for user ${userId}`);
+                          res.json({ message: "Your account has been permanently deleted." });
+                        });
+                      });
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  });
 });
 
 // Logout (destroy session)

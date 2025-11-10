@@ -137,6 +137,51 @@
       transform: translateY(-2px);
     }
 
+    .delete-btn {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #f44336;
+      border-radius: 10px;
+      background: rgba(244, 67, 54, 0.1);
+      color: #f44336;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 30px;
+      font-weight: 500;
+    }
+
+    .delete-btn:hover {
+      background: rgba(244, 67, 54, 0.2);
+      border-color: #ff5252;
+      color: #ff5252;
+      transform: translateY(-2px);
+    }
+
+    .delete-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .danger-zone {
+      margin-top: 40px;
+      padding-top: 30px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .danger-zone h3 {
+      color: #f44336;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    .danger-zone p {
+      color: #888;
+      font-size: 13px;
+      margin-bottom: 15px;
+    }
+
     .message {
       margin-top: 15px;
       padding: 12px;
@@ -212,6 +257,13 @@
 
       <div class="message" id="message"></div>
     </form>
+
+    <!-- Danger Zone -->
+    <div class="danger-zone">
+      <h3>⚠️ Danger Zone</h3>
+      <p>Once you delete your account, there is no going back. This will permanently delete all your products, messages, and account data.</p>
+      <button type="button" class="delete-btn" id="deleteAccountBtn">🗑️ Delete Account</button>
+    </div>
   </div>
 
   <script>
@@ -339,6 +391,59 @@
       message.className = `message ${type}`;
       message.style.display = 'block';
     }
+
+    // Delete Account Functionality
+    document.getElementById('deleteAccountBtn').addEventListener('click', async () => {
+      const confirmation = confirm(
+        '⚠️ WARNING: This will permanently delete your account!\n\n' +
+        'This action will:\n' +
+        '• Delete all your products\n' +
+        '• Delete all your messages\n' +
+        '• Remove all your data\n\n' +
+        'Are you absolutely sure you want to continue?'
+      );
+
+      if (!confirmation) return;
+
+      // Double confirmation
+      const doubleConfirm = prompt(
+        'Type "DELETE" to confirm account deletion:'
+      );
+
+      if (doubleConfirm !== 'DELETE') {
+        if (doubleConfirm !== null) {
+          alert('Account deletion cancelled. You must type "DELETE" exactly.');
+        }
+        return;
+      }
+
+      const deleteBtn = document.getElementById('deleteAccountBtn');
+      deleteBtn.disabled = true;
+      deleteBtn.textContent = 'Deleting...';
+
+      try {
+        const response = await fetch(`${API_BASE}/api/delete-account`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert('✅ ' + data.message);
+          // Redirect to signup page
+          window.location.href = 'signup.html';
+        } else {
+          showMessage('❌ ' + (data.message || 'Failed to delete account'), 'error');
+          deleteBtn.disabled = false;
+          deleteBtn.textContent = '🗑️ Delete Account';
+        }
+      } catch (error) {
+        showMessage('❌ Network error. Please try again.', 'error');
+        deleteBtn.disabled = false;
+        deleteBtn.textContent = '🗑️ Delete Account';
+      }
+    });
 
     // Load profile on page load
     loadProfile();
