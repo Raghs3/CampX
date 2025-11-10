@@ -730,22 +730,26 @@ app.delete("/api/admin/users/:userId", requireAdmin, (req, res) => {
   db.run('DELETE FROM wishlist WHERE product_id IN (SELECT product_id FROM products WHERE seller_id = ?)', [userId], (wishlistErr) => {
     if (wishlistErr) console.warn('⚠️ Error deleting wishlist entries:', wishlistErr);
     
-    // Delete user's products
-    db.run('DELETE FROM products WHERE seller_id = ?', [userId], (err) => {
-      if (err) console.error('Error deleting products:', err);
+    // Delete messages for this user's products
+    db.run('DELETE FROM messages WHERE product_id IN (SELECT product_id FROM products WHERE seller_id = ?)', [userId], (prodMsgErr) => {
+      if (prodMsgErr) console.warn('⚠️ Error deleting product messages:', prodMsgErr);
       
-      // Delete user's wishlist entries as a buyer
-      db.run('DELETE FROM wishlist WHERE user_id = ?', [userId], (wishErr2) => {
-        if (wishErr2) console.warn('⚠️ Error deleting user wishlist:', wishErr2);
+      // Delete user's products
+      db.run('DELETE FROM products WHERE seller_id = ?', [userId], (err) => {
+        if (err) console.error('Error deleting products:', err);
         
-        // Delete user's messages
-        db.run('DELETE FROM messages WHERE sender_id = ? OR receiver_id = ?', [userId, userId], (err2) => {
-          if (err2) console.error('Error deleting messages:', err2);
+        // Delete user's wishlist entries as a buyer
+        db.run('DELETE FROM wishlist WHERE user_id = ?', [userId], (wishErr2) => {
+          if (wishErr2) console.warn('⚠️ Error deleting user wishlist:', wishErr2);
           
-          // Delete user
-          db.run('DELETE FROM users WHERE user_id = ?', [userId], function(err3) {
-            if (err3) {
-              console.error('Error deleting user:', err3);
+          // Delete user's messages
+          db.run('DELETE FROM messages WHERE sender_id = ? OR receiver_id = ?', [userId, userId], (err2) => {
+            if (err2) console.error('Error deleting messages:', err2);
+            
+            // Delete user
+            db.run('DELETE FROM users WHERE user_id = ?', [userId], function(err3) {
+              if (err3) {
+                console.error('Error deleting user:', err3);
               return res.status(500).json({ message: "Error deleting user" });
             }
             res.json({ message: "User deleted successfully" });
@@ -753,6 +757,7 @@ app.delete("/api/admin/users/:userId", requireAdmin, (req, res) => {
         });
       });
     });
+  });
   });
 });
 
@@ -776,19 +781,27 @@ app.get("/api/admin/products", requireAdmin, (req, res) => {
 app.delete("/api/admin/products/:productId", requireAdmin, (req, res) => {
   const { productId } = req.params;
 
-  // First, delete all wishlist entries for this product
+  // Delete all related data first to avoid foreign key constraints
+  // 1. Delete wishlist entries
   db.run('DELETE FROM wishlist WHERE product_id = ?', [productId], function(wishlistErr) {
     if (wishlistErr) {
       console.warn(`⚠️ Failed to delete wishlist entries for product ${productId}:`, wishlistErr.message);
     }
     
-    // Now delete the product
-    db.run('DELETE FROM products WHERE product_id = ?', [productId], function(err) {
-      if (err) {
-        console.error('Error deleting product:', err);
-        return res.status(500).json({ message: "Error deleting product" });
+    // 2. Delete messages related to this product
+    db.run('DELETE FROM messages WHERE product_id = ?', [productId], function(messagesErr) {
+      if (messagesErr) {
+        console.warn(`⚠️ Failed to delete messages for product ${productId}:`, messagesErr.message);
       }
-      res.json({ message: "Product deleted successfully" });
+      
+      // 3. Now delete the product
+      db.run('DELETE FROM products WHERE product_id = ?', [productId], function(err) {
+        if (err) {
+          console.error('Error deleting product:', err);
+          return res.status(500).json({ message: "Error deleting product" });
+        }
+        res.json({ message: "Product deleted successfully" });
+      });
     });
   });
 });
@@ -1110,19 +1123,27 @@ app.delete("/api/products/:id", requireVerifiedEmail, (req, res) => {
 
     deletedStack.push(row);
     
-    // First, delete all wishlist entries for this product to avoid foreign key constraint violation
+    // First, delete all related data to avoid foreign key constraint violations
+    // 1. Delete wishlist entries for this product
     db.run("DELETE FROM wishlist WHERE product_id = ?", [id], function (wishlistErr) {
       if (wishlistErr) {
         console.warn(`⚠️ Failed to delete wishlist entries for product ${id}:`, wishlistErr.message);
       }
       
-      // Now delete the product
-      db.run("DELETE FROM products WHERE product_id = ?", [id], function (err) {
-        if (err) {
-          console.error(`❌ DB.run error: ${err.message}\n   Query: DELETE FROM products WHERE product_id = ?`);
-          return res.status(500).json({ error: err.message });
+      // 2. Delete messages related to this product
+      db.run("DELETE FROM messages WHERE product_id = ?", [id], function (messagesErr) {
+        if (messagesErr) {
+          console.warn(`⚠️ Failed to delete messages for product ${id}:`, messagesErr.message);
         }
-        res.json({ message: "Product deleted", undoAvailable: deletedStack.length > 0 });
+        
+        // 3. Now delete the product itself
+        db.run("DELETE FROM products WHERE product_id = ?", [id], function (err) {
+          if (err) {
+            console.error(`❌ DB.run error: ${err.message}\n   Query: DELETE FROM products WHERE product_id = ?`);
+            return res.status(500).json({ error: err.message });
+          }
+          res.json({ message: "Product deleted", undoAvailable: deletedStack.length > 0 });
+        });
       });
     });
   });
