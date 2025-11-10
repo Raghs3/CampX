@@ -82,6 +82,22 @@ app.use(express.static(path.join(__dirname, "../public")));
 app.use(express.static(path.join(__dirname, "../")));
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
+// Debug endpoint to check what files exist
+app.get("/api/debug/files", (req, res) => {
+  const fs = require('fs');
+  const publicPath = path.join(__dirname, "../public");
+  try {
+    const files = fs.readdirSync(publicPath);
+    res.json({ 
+      publicPath, 
+      files,
+      resetPasswordExists: fs.existsSync(path.join(publicPath, "reset-password.html"))
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ====== DATABASE CONNECTION ======
 // Automatically uses PostgreSQL in production, SQLite locally
 const db = require('./database');
