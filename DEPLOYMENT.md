@@ -23,34 +23,48 @@ Your app is now ready to deploy! Here are the **FREE** hosting options:
 
 3. **Deploy to Render**
    - Go to https://render.com and sign up (use GitHub to sign in)
-   - Click "New +" → "Web Service"
-   - Connect your GitHub repository
-   - Settings:
-     - **Name:** campx-marketplace
-     - **Build Command:** `npm install`
-     - **Start Command:** `node server/server.js`
-     - **Environment:** Node
+   - **FIRST: Create PostgreSQL Database**
+     - Click "New +" → "PostgreSQL"
+     - Name: `campx-database`
+     - Database: `campx`
+     - Click "Create Database"
+     - Copy the "Internal Database URL" (you'll need this)
+   
+   - **THEN: Create Web Service**
+     - Click "New +" → "Web Service"
+     - Connect your GitHub repository (`CampX`)
+     - Settings:
+       - **Name:** campx-marketplace
+       - **Build Command:** `npm install`
+       - **Start Command:** `node server/server.js`
+       - **Environment:** Node
    
 4. **Add Environment Variables in Render**
-   - Go to "Environment" tab
+   - Go to "Environment" tab in your Web Service
    - Add these variables:
      ```
      EMAIL_SERVICE=gmail
      EMAIL_USER=your-email@vit.edu
      EMAIL_PASSWORD=your-app-password-here
-     BASE_URL=https://your-app-name.onrender.com
+     BASE_URL=https://campx-marketplace.onrender.com
      HOST=0.0.0.0
+     NODE_ENV=production
+     DATABASE_URL=<paste-your-internal-database-url-here>
      ```
+   - **Important:** Use the "Internal Database URL" from your PostgreSQL database
 
 5. **Deploy!**
    - Click "Create Web Service"
-   - Wait 5-10 minutes
-   - Your app will be live at: `https://your-app-name.onrender.com`
+   - Wait 5-10 minutes for deployment
+   - Database tables will be created automatically on first run
+   - Your app will be live at: `https://campx-marketplace.onrender.com`
 
 **FREE TIER:**
 - ✅ Free SSL (HTTPS)
+- ✅ PostgreSQL database (persistent, won't lose data!)
 - ✅ Custom domain support
 - ⚠️ Sleeps after 15 mins of inactivity (wakes up on first request)
+- ✅ Database stays even when app sleeps
 
 ---
 

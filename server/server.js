@@ -51,13 +51,14 @@ app.use(express.static(path.join(__dirname, "../")));
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // ====== DATABASE CONNECTION ======
-const dbPath = path.join(__dirname, "../campus.db");
-console.log(" Using database path:", dbPath);
+// Automatically uses PostgreSQL in production, SQLite locally
+const db = require('./database');
 
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) console.error("Database connection failed:", err.message);
-  else console.log(" Connected to campus.db");
-});
+// Initialize PostgreSQL tables if using Postgres
+if (process.env.DATABASE_URL) {
+  const initializePostgresDB = require('./init-postgres');
+  initializePostgresDB().catch(err => console.error('Failed to initialize PostgreSQL:', err));
+}
 
 
 // DATA STRUCTURES
