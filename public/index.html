@@ -356,6 +356,28 @@ select.theme-select {
       <input id="title" name="title" placeholder="Product Title" required />
       <input id="category" name="category" placeholder="Category" />
       <input id="price" name="price" type="number" placeholder="Price" required />
+      
+      <!-- AI Price Suggestion Button -->
+      <button type="button" id="getPriceSuggestion" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 10px; font-weight: 500;">
+        🤖 Get AI Price Suggestion
+      </button>
+      
+      <!-- AI Price Prediction Display -->
+      <div id="aiPriceSuggestion" style="display: none; background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); border: 2px solid #667eea; border-radius: 12px; padding: 15px; margin-bottom: 15px;">
+        <h4 style="margin: 0 0 10px 0; color: #667eea; font-size: 16px;">🤖 AI Price Suggestion</h4>
+        <div style="background: white; border-radius: 8px; padding: 12px; margin-bottom: 10px;">
+          <div style="font-size: 28px; font-weight: bold; color: #667eea; margin-bottom: 5px;" id="aiPredictedPrice">₹0</div>
+          <div style="font-size: 12px; color: #666; margin-bottom: 8px;" id="aiConfidence">Analyzing...</div>
+          <div style="font-size: 13px; color: #333;" id="aiPriceRange">Range: ₹0 - ₹0</div>
+        </div>
+        <div style="font-size: 12px; color: #555; line-height: 1.5; background: white; padding: 10px; border-radius: 8px;" id="aiReasoning">
+          Getting market analysis...
+        </div>
+        <button type="button" id="useSuggestedPrice" style="background: #667eea; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px; font-size: 13px; font-weight: 500;">
+          Use This Price
+        </button>
+      </div>
+      
       <input id="condition" name="condition" placeholder="Condition" />
       <input id="quantity" name="quantity" type="number" placeholder="Quantity/Stock" min="1" value="1" required />
       <textarea id="description" name="description" placeholder="Description"></textarea>

@@ -437,6 +437,85 @@ document.addEventListener("DOMContentLoaded", () => {
     window.scrollTo({ top: document.getElementById('productList').offsetTop - 20, behavior: 'smooth' });
   });
 
+  // ====== AI PRICE PREDICTION ======
+  const getPriceSuggestionBtn = document.getElementById('getPriceSuggestion');
+  const aiPriceSuggestionDiv = document.getElementById('aiPriceSuggestion');
+  const useSuggestedPriceBtn = document.getElementById('useSuggestedPrice');
+  
+  let currentPrediction = null;
+  
+  if (getPriceSuggestionBtn) {
+    getPriceSuggestionBtn.addEventListener('click', async () => {
+      const category = document.getElementById('category').value.trim();
+      const condition = document.getElementById('condition').value.trim();
+      const title = document.getElementById('title').value.trim();
+      const description = document.getElementById('description').value.trim();
+      const userPrice = parseFloat(document.getElementById('price').value) || 0;
+      
+      if (!category || !condition) {
+        alert('Please enter Category and Condition first for accurate AI prediction!');
+        return;
+      }
+      
+      // Show loading state
+      aiPriceSuggestionDiv.style.display = 'block';
+      document.getElementById('aiPredictedPrice').textContent = '₹...';
+      document.getElementById('aiConfidence').textContent = '🤖 Analyzing market data...';
+      document.getElementById('aiPriceRange').textContent = 'Researching prices on OLX, Amazon, Flipkart...';
+      document.getElementById('aiReasoning').textContent = 'Please wait while AI researches current market prices...';
+      getPriceSuggestionBtn.disabled = true;
+      getPriceSuggestionBtn.textContent = '⏳ AI Analyzing...';
+      
+      try {
+        const response = await fetch(`${API_BASE}/api/predict-price`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            category,
+            condition,
+            title,
+            description,
+            userPrice
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.prediction) {
+          currentPrediction = data.prediction;
+          const { predicted, lower, upper, confidence, reasoning } = data.prediction;
+          
+          document.getElementById('aiPredictedPrice').textContent = `₹${predicted.toLocaleString()}`;
+          document.getElementById('aiConfidence').textContent = `${confidence} confidence`;
+          document.getElementById('aiPriceRange').textContent = `Fair range: ₹${lower.toLocaleString()} - ₹${upper.toLocaleString()}`;
+          document.getElementById('aiReasoning').textContent = reasoning;
+          
+          // Change button color based on confidence
+          const confColor = confidence === 'high' ? '#10b981' : confidence === 'medium' ? '#f59e0b' : '#6b7280';
+          document.getElementById('aiConfidence').style.color = confColor;
+          document.getElementById('aiConfidence').style.fontWeight = 'bold';
+        } else {
+          document.getElementById('aiReasoning').textContent = data.message || 'Failed to get price prediction. Please try again.';
+        }
+      } catch (error) {
+        console.error('Price prediction error:', error);
+        document.getElementById('aiReasoning').textContent = 'Error getting AI prediction. Please check your connection and try again.';
+      } finally {
+        getPriceSuggestionBtn.disabled = false;
+        getPriceSuggestionBtn.textContent = '🤖 Get AI Price Suggestion';
+      }
+    });
+  }
+  
+  if (useSuggestedPriceBtn) {
+    useSuggestedPriceBtn.addEventListener('click', () => {
+      if (currentPrediction && currentPrediction.predicted) {
+        document.getElementById('price').value = currentPrediction.predicted;
+        alert(`✅ Price updated to ₹${currentPrediction.predicted.toLocaleString()} (AI suggestion)`);
+      }
+    });
+  }
+
   document.getElementById("productForm").addEventListener("submit", addProduct);
  // Sold items nav button
   const soldNav = document.getElementById('soldNavBtn');

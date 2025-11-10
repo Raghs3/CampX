@@ -243,6 +243,74 @@ async function sendVerificationEmail(email, token, fullName) {
   }
 }
 
+// ====== AI PRICE PREDICTION ======
+const { predictPrice } = require('./price_prediction');
+
+/**
+ * POST /api/predict-price
+ * Predict fair price for a product using Gemini AI
+ */
+app.post("/api/predict-price", async (req, res) => {
+  try {
+    const { category, condition, title, description, userPrice } = req.body;
+    
+    if (!category || !condition) {
+      return res.status(400).json({ 
+        error: 'Category and condition are required' 
+      });
+    }
+    
+    console.log(`🔮 Predicting price for: ${category} - ${condition} - ${title || 'No title'}`);
+    
+    const prediction = await predictPrice(
+      category, 
+      condition, 
+      title || '', 
+      description || '', 
+      userPrice || 0
+    );
+    
+    res.json({
+      success: true,
+      category,
+      condition,
+      prediction
+    });
+    
+  } catch (error) {
+    console.error('❌ Price prediction error:', error);
+    res.status(500).json({ 
+      error: 'Failed to predict price',
+      message: error.message 
+    });
+  }
+});
+
+/**
+ * GET /api/price-categories
+ * Get list of supported categories and conditions
+ */
+app.get("/api/price-categories", (req, res) => {
+  res.json({
+    categories: [
+      'Books',
+      'Electronics',
+      'Furniture',
+      'Clothing',
+      'Sports',
+      'Stationery',
+      'Other'
+    ],
+    conditions: [
+      'New',
+      'Like New',
+      'Good',
+      'Fair',
+      'Poor'
+    ]
+  });
+});
+
 // AUTH ROUTES (Signup + Login)
 
 // SIGNUP (no phone, no role required)
