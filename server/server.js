@@ -1314,6 +1314,14 @@ app.get("/home", (req, res) => {
   res.sendFile(path.join(__dirname, "../public/index.html"));
 });
 
+app.get("/forgot-password.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "../public/forgot-password.html"));
+});
+
+app.get("/reset-password.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "../public/reset-password.html"));
+});
+
 // Error handling middleware (must be last)
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
