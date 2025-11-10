@@ -26,6 +26,9 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || 'localhost';
 
+// Trust proxy - required for Render.com and other reverse proxies
+app.set('trust proxy', 1);
+
 app.use(cors({
   origin: process.env.CORS_ORIGIN || true,
   credentials: true
@@ -64,9 +67,11 @@ app.use(session({
   secret: process.env.SESSION_SECRET || "campx_secret_key",
   resave: false,
   saveUninitialized: false,
+  proxy: true, // Trust the reverse proxy
   cookie: { 
-    secure: false, // Set to false to work on both HTTP (local) and HTTPS (production)
+    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
     httpOnly: true, // Prevent XSS attacks
+    sameSite: 'lax', // CSRF protection
     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
   }
 }));
