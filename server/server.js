@@ -511,10 +511,10 @@ function requireAdmin(req, res, next) {
 
 // Get admin statistics
 app.get("/api/admin/stats", requireAdmin, (req, res) => {
-  db.get('SELECT COUNT(*) as count FROM users', (err, users) => {
+  db.get('SELECT COUNT(*) as count FROM users', [], (err, users) => {
     if (err) return res.status(500).json({ message: "Error fetching stats" });
     
-    db.get('SELECT COUNT(*) as count FROM products', (err2, products) => {
+    db.get('SELECT COUNT(*) as count FROM products', [], (err2, products) => {
       if (err2) return res.status(500).json({ message: "Error fetching stats" });
       
       db.get('SELECT COUNT(*) as count FROM products WHERE status = ?', ['Available'], (err3, available) => {
@@ -537,7 +537,7 @@ app.get("/api/admin/stats", requireAdmin, (req, res) => {
 
 // Get all users
 app.get("/api/admin/users", requireAdmin, (req, res) => {
-  db.all('SELECT user_id, full_name, email, phone, role, created_at FROM users ORDER BY created_at DESC', (err, users) => {
+  db.all('SELECT user_id, full_name, email, phone, role, created_at FROM users ORDER BY created_at DESC', [], (err, users) => {
     if (err) {
       console.error('Error fetching users:', err);
       return res.status(500).json({ message: "Error fetching users" });
@@ -600,7 +600,7 @@ app.get("/api/admin/products", requireAdmin, (req, res) => {
     FROM products p 
     LEFT JOIN users u ON p.seller_id = u.user_id 
     ORDER BY p.created_at DESC
-  `, (err, products) => {
+  `, [], (err, products) => {
     if (err) {
       console.error('Error fetching products:', err);
       return res.status(500).json({ message: "Error fetching products" });
