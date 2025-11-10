@@ -26,18 +26,32 @@ if (usePostgres) {
       try {
         const pgQuery = convertPlaceholders(query);
         const result = await pool.query(pgQuery, params);
-        callback(null, result.rows[0]);
+        if (callback && typeof callback === 'function') {
+          callback(null, result.rows[0]);
+        }
+        return result.rows[0];
       } catch (err) {
-        callback(err);
+        if (callback && typeof callback === 'function') {
+          callback(err);
+        } else {
+          throw err;
+        }
       }
     },
     all: async (query, params, callback) => {
       try {
         const pgQuery = convertPlaceholders(query);
         const result = await pool.query(pgQuery, params);
-        callback(null, result.rows);
+        if (callback && typeof callback === 'function') {
+          callback(null, result.rows);
+        }
+        return result.rows;
       } catch (err) {
-        callback(err);
+        if (callback && typeof callback === 'function') {
+          callback(err);
+        } else {
+          throw err;
+        }
       }
     },
     run: async (query, params, callback) => {
@@ -47,9 +61,16 @@ if (usePostgres) {
         // For INSERT queries with RETURNING, get the first column value as lastID
         const firstRow = result.rows[0];
         const lastID = firstRow ? Object.values(firstRow)[0] : undefined;
-        if (callback) callback.call({ lastID: lastID, changes: result.rowCount }, null);
+        if (callback && typeof callback === 'function') {
+          callback.call({ lastID: lastID, changes: result.rowCount }, null);
+        }
+        return { lastID, changes: result.rowCount };
       } catch (err) {
-        if (callback) callback(err);
+        if (callback && typeof callback === 'function') {
+          callback(err);
+        } else {
+          throw err;
+        }
       }
     },
     pool: pool // Direct access to pool if needed
