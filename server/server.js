@@ -192,6 +192,7 @@ app.post("/api/register", async (req, res) => {
   const query = `
     INSERT INTO users (full_name, email, password_hash, phone, email_verified, verification_token, token_expires)
     VALUES (?, ?, ?, ?, 0, ?, ?)
+    RETURNING user_id
   `;
 
   db.run(query, [full_name, email, password_hash, phone, verification_token, token_expires], async function (err) {
@@ -445,7 +446,8 @@ app.post("/api/products", requireVerifiedEmail, upload.any(), (req, res) => {
   const stock = parseInt(quantity) || 1;
   db.run(
     `INSERT INTO products (seller_id, title, category, price, condition, description, contact_method, quantity, image1, image2, image3)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     RETURNING product_id`,
     [user.user_id, title, category, price, condition, description, contact_info, stock, images[0], images[1], images[2]],
     function (err) {
       if (err) {
@@ -591,7 +593,8 @@ app.post('/api/products/:id/book', requireVerifiedEmail, (req, res) => {
       // ALWAYS insert into sold_items for each purchase
       db.run(
         `INSERT INTO sold_items (product_id, seller_id, buyer_id, title, category, price, condition, description, contact_method, image1, image2, image3)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         RETURNING sold_id`,
         [id, row.seller_id, user.user_id, row.title, row.category, row.price, row.condition, row.description, row.contact_method || null, row.image1 || null, row.image2 || null, row.image3 || null],
         function (sErr) {
           if (sErr) {
@@ -607,7 +610,8 @@ app.post('/api/products/:id/book', requireVerifiedEmail, (req, res) => {
 
           // Insert a message into messages table to notify seller
           db.run(
-            `INSERT INTO messages (item_id, sender_id, receiver_id, message_text) VALUES (?, ?, ?, ?)`,
+            `INSERT INTO messages (item_id, sender_id, receiver_id, message_text) VALUES (?, ?, ?, ?)
+             RETURNING message_id`,
             [id, user.user_id, row.seller_id, messageText],
             function (mErr) {
               if (mErr) {
@@ -706,7 +710,8 @@ app.post('/api/messages', requireVerifiedEmail, (req, res) => {
   if (!receiver_id || !message_text) return res.status(400).json({ error: 'receiver_id and message_text required' });
 
   db.run(
-    `INSERT INTO messages (item_id, sender_id, receiver_id, message_text) VALUES (?, ?, ?, ?)`,
+    `INSERT INTO messages (item_id, sender_id, receiver_id, message_text) VALUES (?, ?, ?, ?)
+     RETURNING message_id`,
     [item_id || null, user.user_id, receiver_id, message_text],
     function (err) {
       if (err) {
@@ -789,7 +794,7 @@ app.post('/api/wishlist', requireVerifiedEmail, (req, res) => {
     if (err) return res.status(500).json({ error: err.message });
     if (row) return res.status(400).json({ error: 'Already in wishlist' });
 
-    db.run('INSERT INTO wishlist (user_id, product_id) VALUES (?, ?)', [user.user_id, product_id], function (err) {
+    db.run('INSERT INTO wishlist (user_id, product_id) VALUES (?, ?) RETURNING wishlist_id', [user.user_id, product_id], function (err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ message: ' Added to wishlist', wishlist_id: this.lastID });
     });
@@ -866,7 +871,7 @@ app.post('/api/reviews', requireVerifiedEmail, (req, res) => {
           
           // Insert review
           db.run(
-            'INSERT INTO reviews (seller_id, buyer_id, product_id, rating, review_text) VALUES (?, ?, ?, ?, ?)',
+            'INSERT INTO reviews (seller_id, buyer_id, product_id, rating, review_text) VALUES (?, ?, ?, ?, ?) RETURNING review_id',
             [seller_id, user.user_id, product_id, rating, review_text || ''],
             function(err) {
               if (err) return res.status(500).json({ error: err.message });

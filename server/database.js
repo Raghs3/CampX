@@ -14,11 +14,18 @@ if (usePostgres) {
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
   });
 
+  // Helper function to convert SQLite ? placeholders to PostgreSQL $1, $2, etc.
+  const convertPlaceholders = (query) => {
+    let index = 0;
+    return query.replace(/\?/g, () => `$${++index}`);
+  };
+
   // Wrapper to make PostgreSQL queries work like SQLite
   db = {
     get: async (query, params, callback) => {
       try {
-        const result = await pool.query(query, params);
+        const pgQuery = convertPlaceholders(query);
+        const result = await pool.query(pgQuery, params);
         callback(null, result.rows[0]);
       } catch (err) {
         callback(err);
@@ -26,7 +33,8 @@ if (usePostgres) {
     },
     all: async (query, params, callback) => {
       try {
-        const result = await pool.query(query, params);
+        const pgQuery = convertPlaceholders(query);
+        const result = await pool.query(pgQuery, params);
         callback(null, result.rows);
       } catch (err) {
         callback(err);
@@ -34,8 +42,12 @@ if (usePostgres) {
     },
     run: async (query, params, callback) => {
       try {
-        const result = await pool.query(query, params);
-        if (callback) callback.call({ lastID: result.rows[0]?.id, changes: result.rowCount }, null);
+        const pgQuery = convertPlaceholders(query);
+        const result = await pool.query(pgQuery, params);
+        // For INSERT queries with RETURNING, get the first column value as lastID
+        const firstRow = result.rows[0];
+        const lastID = firstRow ? Object.values(firstRow)[0] : undefined;
+        if (callback) callback.call({ lastID: lastID, changes: result.rowCount }, null);
       } catch (err) {
         if (callback) callback(err);
       }
