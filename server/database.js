@@ -26,11 +26,13 @@ if (usePostgres) {
       try {
         const pgQuery = convertPlaceholders(query);
         const result = await pool.query(pgQuery, params);
+        const row = result ? result.rows[0] : null;
         if (callback && typeof callback === 'function') {
-          callback(null, result.rows[0]);
+          callback(null, row);
         }
-        return result.rows[0];
+        return row;
       } catch (err) {
+        console.error('DB.get error:', err.message, 'Query:', query);
         if (callback && typeof callback === 'function') {
           callback(err);
         } else {
@@ -42,11 +44,13 @@ if (usePostgres) {
       try {
         const pgQuery = convertPlaceholders(query);
         const result = await pool.query(pgQuery, params);
+        const rows = result ? result.rows : [];
         if (callback && typeof callback === 'function') {
-          callback(null, result.rows);
+          callback(null, rows);
         }
-        return result.rows;
+        return rows;
       } catch (err) {
+        console.error('DB.all error:', err.message, 'Query:', query);
         if (callback && typeof callback === 'function') {
           callback(err);
         } else {
@@ -59,13 +63,15 @@ if (usePostgres) {
         const pgQuery = convertPlaceholders(query);
         const result = await pool.query(pgQuery, params);
         // For INSERT queries with RETURNING, get the first column value as lastID
-        const firstRow = result.rows[0];
+        const firstRow = result && result.rows ? result.rows[0] : null;
         const lastID = firstRow ? Object.values(firstRow)[0] : undefined;
+        const changes = result ? result.rowCount : 0;
         if (callback && typeof callback === 'function') {
-          callback.call({ lastID: lastID, changes: result.rowCount }, null);
+          callback.call({ lastID: lastID, changes: changes }, null);
         }
-        return { lastID, changes: result.rowCount };
+        return { lastID, changes };
       } catch (err) {
+        console.error('DB.run error:', err.message, 'Query:', query);
         if (callback && typeof callback === 'function') {
           callback(err);
         } else {
