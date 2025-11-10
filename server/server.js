@@ -247,8 +247,7 @@ async function sendVerificationEmail(email, token, fullName) {
 const { predictPrice } = require('./price_prediction');
 
 // ====== AI IMAGE ANALYSIS ======
-// DISABLED: Uncomment when merging feature/ai-image-verification branch
-// const { analyzeImage } = require('./image_analysis');
+const { analyzeImage } = require('./image_analysis');
 
 /**
  * POST /api/predict-price
@@ -338,13 +337,12 @@ app.post("/api/upload-temp-image", upload.single('image1'), (req, res) => {
   }
 });
 
-/* DISABLED: AI Image Analysis - Uncomment when merging feature/ai-image-verification branch
+
 /**
  * POST /api/analyze-image
  * Analyze uploaded product image(s) using Gemini Vision AI
  * Returns: product details, category, condition, price, legitimacy check
  */
-/*
 app.post("/api/analyze-image", async (req, res) => {
   try {
     const { imagePath, imagePaths } = req.body;
@@ -382,7 +380,6 @@ app.post("/api/analyze-image", async (req, res) => {
     });
   }
 });
-*/
 
 // AUTH ROUTES (Signup + Login)
 
@@ -1054,12 +1051,10 @@ app.post("/api/resend-verification", async (req, res) => {
   });
 });
 
-/* DISABLED: AI Image Analysis - Uncomment when merging feature/ai-image-verification branch
 /**
  * POST /api/upload-temp-images
  * Upload images temporarily for AI analysis (before product creation)
  */
-/*
 app.post("/api/upload-temp-images", requireAuth, upload.any(), (req, res) => {
   try {
     const filesArray = req.files || [];
@@ -1087,7 +1082,6 @@ app.post("/api/upload-temp-images", requireAuth, upload.any(), (req, res) => {
     });
   }
 });
-*/
 
 // PRODUCTS ROUTES
 // Add a new product (requires authentication and verified email)
