@@ -24,6 +24,36 @@ Thumbs.db
 *.swp
 *.swo
 
-# Uploads (optional - comment out if you want to keep uploads in git)
+# Python virtual environment
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Uploads (user-uploaded files)
 uploads/*
 !uploads/.gitkeep
+
+# Local development/testing scripts (not for production)
+migrate_to_postgres.py
+fix_postgres_schema.py
+add_missing_wishlist.py
+check_postgres_wishlist.py
+ai_image_verifier.py
+ai implementation backup/
+
+# Documentation (keep only README.md)
+AI_IMAGE_ANALYSIS.md
+AI_SETUP.md
+DEPLOYMENT.md
+EMAIL_SETUP.md
+SECURITY_AUDIT.md
+
+# Legacy/development scripts
+scripts/check-postgres.js
+scripts/create-admin-*.js
+scripts/find-admin.js
+scripts/migrate-*.js
+scripts/delete_user.py
+server/image_verification.js
