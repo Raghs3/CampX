@@ -105,6 +105,20 @@ async function initializePostgresDB() {
       )
     `);
 
+    // Session table (for connect-pg-simple)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS session (
+        sid VARCHAR NOT NULL COLLATE "default",
+        sess JSON NOT NULL,
+        expire TIMESTAMP(6) NOT NULL,
+        PRIMARY KEY (sid)
+      )
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS IDX_session_expire ON session (expire)
+    `);
+
     console.log('✅ PostgreSQL database initialized successfully!');
     await pool.end();
   } catch (error) {

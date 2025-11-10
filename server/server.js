@@ -80,10 +80,27 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 // Automatically uses PostgreSQL in production, SQLite locally
 const db = require('./database');
 
-// Initialize PostgreSQL tables if using Postgres
-if (process.env.DATABASE_URL) {
-  const initializePostgresDB = require('./init-postgres');
-  initializePostgresDB().catch(err => console.error('Failed to initialize PostgreSQL:', err));
+// Initialize database and start server
+async function startServer() {
+  // Initialize PostgreSQL tables if using Postgres
+  if (process.env.DATABASE_URL) {
+    try {
+      const initializePostgresDB = require('./init-postgres');
+      await initializePostgresDB();
+      console.log('✅ Database initialized');
+    } catch (err) {
+      console.error('❌ Failed to initialize PostgreSQL:', err);
+      process.exit(1);
+    }
+  }
+
+  // Start the server after database is ready
+  app.listen(PORT, () => {
+    console.log(` CampX running at http://${HOST}:${PORT}`);
+    if (process.env.BASE_URL) {
+      console.log(` Public URL: ${process.env.BASE_URL}`);
+    }
+  });
 }
 
 
@@ -956,12 +973,19 @@ app.get("/home", (req, res) => {
   res.sendFile(path.join(__dirname, "../public/index.html"));
 });
 
-//  START SERVER 
-app.listen(PORT, () => {
-  console.log(` CampX running at http://${HOST}:${PORT}`);
-  if (process.env.BASE_URL) {
-    console.log(` Public URL: ${process.env.BASE_URL}`);
-  }
+// Error handling middleware (must be last)
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ 
+    error: 'Internal Server Error', 
+    message: process.env.NODE_ENV === 'production' ? 'Something went wrong' : err.message 
+  });
+});
+
+// Call startServer function to initialize DB and start listening
+startServer().catch(err => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
 });
 
 
