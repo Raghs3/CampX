@@ -312,7 +312,8 @@ app.post("/api/login", (req, res) => {
       user_id: user.user_id,
       full_name: user.full_name,
       email: user.email,
-      phone: user.phone
+      phone: user.phone,
+      role: user.role || 'student' // Include role for admin access
     };
 
     res.json({
