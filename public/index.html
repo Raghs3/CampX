@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CampX — Buy • Sell • Connect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ---------- Theme Variables ---------- */
+body.professional {
+  --bg-gradient: linear-gradient(135deg, #ff4da6, #5b5bff);
+  --card-bg: rgba(255,255,255,0.95);
+  --card-text: #0f172a;
+  --accent-solid: #7b2ff7;
+  --accent-hover: #6925d9;
+  --button-text: #ffffff;
+  --header-bg: rgba(0,0,0,0.15);
+}
+
+body.dark {
+  --bg-gradient: linear-gradient(135deg, #1f42c1 0%, #102d53 100%);
+  --card-bg: rgba(27, 50, 85, 0.9);
+  --card-text: #e0e0e0;
+  --accent-solid: #1abc9c;
+  --accent-hover: #159b82;
+  --button-text: #ffffff;
+  --header-bg: rgba(20,30,45,0.85);
+}
+
+body.light {
+  --bg-gradient: linear-gradient(135deg, #e0faeb 0%, #80d0ff 100%);
+  --card-bg: rgba(255,255,255,0.95);
+  --card-text: #222;
+  --accent-solid: #3498db;
+  --accent-hover: #277bb2;
+  --button-text: #ffffff;
+  --header-bg: rgba(224,247,250,0.9);
+}
+
+/* ---------- Layout ---------- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg-gradient); font-family: 'Inter', sans-serif; color: var(--card-text); margin: 0; }
+header.app-header { backdrop-filter: blur(6px); background: var(--header-bg); color: var(--button-text); padding: 1rem 2rem; display:flex; justify-content:space-between; align-items:center; }
+.brand { font-size: 1.8rem; font-weight: 800; display:flex; align-items:center; gap:.5rem; }
+
+/* ---------- Product Grid ---------- */
+.grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:1.5rem; padding:2rem; }
+.product-card { background: var(--card-bg); border-radius: 15px; padding: 1.5rem; box-shadow: 0 8px 24px rgba(2,6,23,0.12); position:relative; }
+.status-badge { position:absolute; top:10px; right:12px; padding:6px 10px; border-radius:999px; font-size:0.8rem; font-weight:600; color:#fff; box-shadow:0 6px 18px rgba(0,0,0,0.12); }
+.status-badge.available { background:#1abc9c; }
+.status-badge.sold { background:#e63946; }
+
+/* ---------- Buttons ---------- */
+button { cursor:pointer; border:none; border-radius:8px; font-weight:500; padding:0.6rem 1.2rem; }
+.add-btn, .edit-btn, .buy-btn { background: var(--accent-solid); color: var(--button-text); }
+.delete-btn { background:#dc3545; color:#fff; }
+.cancel-btn { background:#6c757d; color:#fff; }
+.logout-btn { background:#ff4757; color:#fff; }
+
+/* ---------- Modal ---------- */
+.modal { display:none; position:fixed; z-index:10; inset:0; background: rgba(0,0,0,0.4); justify-content:center; align-items:center; }
+.modal-content { background: var(--card-bg); padding:2rem; border-radius:10px; width:350px; box-shadow:0 5px 20px rgba(0,0,0,0.2); max-height:85vh; overflow-y:auto; }
+.modal-content input, .modal-content textarea { width:100%; margin-bottom:10px; padding:10px; border-radius:6px; border:1px solid #ccc; font-size:1rem; background:#fff; }
+.modal-buttons { display:flex; justify-content:space-between; position:sticky; bottom:0; background: var(--card-bg); padding-top:10px; margin-top:10px; border-top:1px solid rgba(0,0,0,0.08); }
+.modal-buttons button { flex:1; margin:5px; }
+
+/* ---------- Theme Selector ---------- */
+select.theme-select { background: var(--card-bg); color: var(--card-text); border-radius:8px; padding:6px 10px; border:none; }
+
+.product-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent-solid), var(--accent-hover));
+  transform: scaleX(0);
+  transition: transform 0.35s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-10px) scale(1.02);
+  box-shadow: var(--shadow-lg);
+}
+
+.product-card:hover::before {
+  transform: scaleX(1);
+}
+
+.product-card h3 {
+  margin: 0 0 10px 0;
+  color: var(--card-text);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.product-card p {
+  margin: 6px 0;
+  color: var(--card-text);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  opacity: 0.85;
+}
+
+.product-card .buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.product-card .buttons button {
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.product-card .buttons button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.product-card .buy-btn {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  min-width: 80px;
+}
+
+/* Status badge */
+.status-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: white;
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(10px);
+}
+
+.status-badge.available {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.status-badge.sold {
+  background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+}
+
+.product-card .edit-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.product-card .delete-btn {
+  background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+  color: white;
+}
+
+.product-card .contact-btn {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+}
+
+/* ---------- Buttons ---------- */
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  padding: 0.7rem 1.4rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: inherit;
+  font-size: 0.95rem;
+  box-shadow: var(--shadow-sm);
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+.add-btn {
+  background: linear-gradient(135deg, var(--accent-solid) 0%, var(--accent-hover) 100%);
+  color: var(--button-text);
+}
+
+.edit-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.buy-btn {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.delete-btn {
+  background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+  color: white;
+}
+
+.cancel-btn {
+  background: linear-gradient(135deg, #bdc3c7 0%, #95a5a6 100%);
+  color: white;
+}
+
+.logout-btn {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: white;
+}
+
+/* ---------- Modal ---------- */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 10;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.4);
+  justify-content: center;
+  align-items: center;
+}
+.modal-content {
+  background: var(--card-bg);
+  padding: 2rem;
+  border-radius: 10px;
+  width: 350px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+  max-height: 85vh;            /* keep modal inside viewport */
+  overflow-y: auto;            /* allow scroll to buttons on small screens */
+}
+.modal-content h2 {
+  margin-top: 0;
+}
+.modal-content input, .modal-content textarea {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  background: white;
+}
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  position: sticky;            /* keep action buttons visible when scrolling */
+  bottom: 0;
+  background: var(--card-bg);
+  padding-top: 10px;
+  margin-top: 10px;
+  border-top: 1px solid rgba(0,0,0,0.08);
+}
+.modal-buttons button {
+  flex: 1;
+  margin: 5px;
+}
+
+/* ---------- Theme Selector ---------- */
+select.theme-select {
+  background: var(--card-bg);
+  color: var(--card-text);
+  border-radius: 8px;
+  padding: 6px 10px;
+  border: none;
+}
+
+/* ---------- Floating Action Buttons ---------- */
+.fab-stack {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  z-index: 2000;
+}
+
+.fab {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-solid), var(--accent-hover));
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-md);
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  font-size: 1.4rem;
+}
+
+.fab:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.fab.secondary { background: #ffffff; color: #0f172a; border: 1px solid rgba(0,0,0,0.08); }
+.fab.secondary:hover { transform: translateY(-2px); }
+</style>
+</head>
+<body class="professional">
+
+<header class="app-header">
+  <div class="brand">⚡ CampX Marketplace</div>
+  <div class="flex gap-3 items-center">
+    <select id="themeSelector" class="theme-select">
+      <option value="professional">Professional</option>
+      <option value="dark">Dark</option>
+      <option value="light">Light</option>
+    </select>
+    <button id="addProductBtn" class="add-btn">+ Add Product</button>
+    <button id="messagesBtn" class="add-btn">Messages</button>
+    <button id="wishlistNavBtn" class="add-btn">My Wishlist</button>
+    <button id="soldNavBtn" class="add-btn">Sold Items</button>
+    <button id="myReviewsBtn" class="add-btn">My Reviews</button>
+    <button id="logoutBtn" class="logout-btn">Logout</button>
+  </div>
+</header>
+
+<main>
+  <section style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 16px;">
+    <input id="searchInput" type="text" placeholder="Search by title, description, category" style="flex:1;min-width:240px;padding:10px 12px;border:1px solid rgba(0,0,0,0.15);border-radius:8px;" />
+    <select id="categoryFilter" style="padding:10px 12px;border:1px solid rgba(0,0,0,0.15);border-radius:8px;min-width:180px;">
+      <option value="">All Categories</option>
+    </select>
+    <button id="clearFilters" class="add-btn" type="button">Clear</button>
+  </section>
+  <section id="productList" class="grid"></section>
+</main>
+
+
+<!-- Modal -->
+<div id="productModal" class="modal">
+  <div class="modal-content">
+    <h2>Add New Product</h2>
+    <form id="productForm">
+      <input id="title" name="title" placeholder="Product Title" required />
+      <input id="category" name="category" placeholder="Category" />
+      <input id="price" name="price" type="number" placeholder="Price" required />
+      <input id="condition" name="condition" placeholder="Condition" />
+      <input id="quantity" name="quantity" type="number" placeholder="Quantity/Stock" min="1" value="1" required />
+      <textarea id="description" name="description" placeholder="Description"></textarea>
+      <input id="contact_info" name="contact_info" placeholder="Contact Info (email/phone)" />
+  <!-- Image uploads: first required, next two optional -->
+  <label style="font-size:0.9rem;color:#555;">Image 1 (required)</label>
+  <input id="image1File" name="image1" type="file" accept="image/*" style="margin-bottom:10px;" required />
+  <label style="font-size:0.9rem;color:#555;">Image 2 (optional)</label>
+  <input id="image2File" name="image2" type="file" accept="image/*" style="margin-bottom:10px;" />
+  <label style="font-size:0.9rem;color:#555;">Image 3 (optional)</label>
+  <input id="image3File" name="image3" type="file" accept="image/*" style="margin-bottom:10px;" />
+      <div class="modal-buttons">
+        <button type="submit">Add</button>
+        <button type="button" id="cancelBtn">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Seller Info Modal -->
+<div id="sellerModal" class="modal">
+  <div class="modal-content" style="width:520px;">
+    <h2 id="productTitle">Product</h2>
+    <div style="display:flex;gap:18px;align-items:flex-start;margin:8px 0;">
+      <div style="flex:1">
+        <p id="productCategory" style="margin:4px 0;font-weight:600;color:var(--card-text);"></p>
+        <p id="productPrice" style="margin:4px 0;color:var(--card-text);"></p>
+        <p id="productCondition" style="margin:4px 0;color:var(--card-text);"></p>
+        <p id="productStock" style="margin:4px 0;color:var(--card-text);"></p>
+        <p id="productDescription" style="margin:8px 0;color:var(--card-text);"></p>
+      </div>
+      <div style="width:220px;border-left:1px solid rgba(0,0,0,0.06);padding-left:12px;">
+        <h3 id="sellerName" style="margin:0 0 8px 0;">Seller</h3>
+        <p id="sellerEmail" style="margin:4px 0;color:var(--card-text);"></p>
+        <p id="sellerPhone" style="margin:4px 0;color:var(--card-text);"></p>
+        <!-- Product images (up to 3) shown here instead of seller avatar -->
+        <div id="productImages" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+          <img id="productImage1" src="" alt="image1" class="product-thumb" style="width:100%;height:80px;border-radius:6px;object-fit:cover;background:#eee;display:none;cursor:pointer;" />
+          <img id="productImage2" src="" alt="image2" class="product-thumb" style="width:100%;height:80px;border-radius:6px;object-fit:cover;background:#eee;display:none;cursor:pointer;" />
+          <img id="productImage3" src="" alt="image3" class="product-thumb" style="width:100%;height:80px;border-radius:6px;object-fit:cover;background:#eee;display:none;cursor:pointer;" />
+        </div>
+
+<!-- Image Modal for zoom -->
+<div id="imageZoomModal" class="modal" style="z-index:2000;">
+  <div class="modal-content" style="background:transparent;box-shadow:none;padding:0;max-width:90vw;max-height:90vh;display:flex;justify-content:center;align-items:center;">
+    <img id="zoomedImage" src="" alt="zoomed" style="max-width:90vw;max-height:80vh;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.25);background:#fff;" />
+  </div>
+</div>
+      </div>
+    </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">
+      <button id="closeSeller" class="cancel-btn">Close</button>
+      <button id="messageSeller" class="contact-btn">Message Seller</button>
+      <!-- Make Book and Wishlist buttons present in static markup so they are always available to JS and visible in the modal -->
+      <button id="bookProduct" class="add-btn" style="position:relative;z-index:1002;display:inline-block;">Book</button>
+      <button id="wishlistProduct" class="add-btn" style="position:relative;z-index:1002;display:inline-block;">Add to Wishlist</button>
+    </div>
+  </div>
+</div>
+
+<!-- Wishlist Modal -->
+<div id="wishlistModal" class="modal">
+  <div class="modal-content" style="width:700px;">
+    <h2>My Wishlist</h2>
+    <div id="wishlistContainer" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:12px;"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:12px;">
+      <button id="closeWishlist" class="cancel-btn">Close</button>
+    </div>
+  </div>
+</div>
+
+    <!-- Messages Modal -->
+    <div id="messagesModal" class="modal">
+      <div class="modal-content" style="width:700px;">
+        <h2>Messages</h2>
+        <div id="messagesList" style="display:flex;flex-direction:column;gap:10px;margin-top:12px;max-height:420px;overflow:auto;"></div>
+        <div id="messageDetail" style="display:none;margin-top:12px;padding:12px;border-radius:8px;background:rgba(0,0,0,0.03)"></div>
+        <div style="display:flex;justify-content:flex-end;margin-top:12px;gap:8px;">
+          <button id="closeMessages" class="cancel-btn">Close</button>
+        </div>
+      </div>
+    </div>
+
+<!-- Single Message View Modal -->
+<div id="messageViewModal" class="modal">
+  <div class="modal-content" style="width:600px;max-width:90vw;">
+    <h2>Message Details</h2>
+    <div id="messageViewContent" style="margin-top:16px;"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:16px;gap:8px;">
+      <button id="closeMessageView" class="cancel-btn">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sold Items Modal -->
+<div id="soldModal" class="modal">
+  <div class="modal-content" style="width:800px;">
+    <h2>Sold Items</h2>
+    <div id="soldContainer" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:12px;max-height:520px;overflow:auto;"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:12px;">
+      <button id="closeSold" class="cancel-btn">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Review Modal -->
+<div id="reviewModal" class="modal">
+  <div class="modal-content" style="width:500px;">
+    <h2>Review Seller</h2>
+    <form id="reviewForm" style="display:flex;flex-direction:column;gap:12px;">
+      <input type="hidden" id="reviewSellerId" />
+      <input type="hidden" id="reviewProductId" />
+      <div>
+        <label style="font-weight:600;margin-bottom:8px;display:block;">Rating (1-5 stars):</label>
+        <div id="starRating" style="font-size:2rem;cursor:pointer;">
+          <span class="star" data-value="1">☆</span>
+          <span class="star" data-value="2">☆</span>
+          <span class="star" data-value="3">☆</span>
+          <span class="star" data-value="4">☆</span>
+          <span class="star" data-value="5">☆</span>
+        </div>
+        <input type="hidden" id="ratingValue" required />
+      </div>
+      <div>
+        <label style="font-weight:600;margin-bottom:8px;display:block;">Review (optional):</label>
+        <textarea id="reviewText" rows="4" style="width:100%;padding:10px;border-radius:6px;border:1px solid #ccc;"></textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;">
+        <button type="button" id="cancelReview" class="cancel-btn">Cancel</button>
+        <button type="submit" class="add-btn">Submit Review</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../js/app.js"></script>
+
+<script>
+// ---------- Theme Switching ----------
+const themeSelector = document.getElementById("themeSelector");
+function applyTheme(theme) { document.body.className = theme; }
+themeSelector.addEventListener("change", e => applyTheme(e.target.value));
+applyTheme("professional");
+
+// ---------- Modal Control ----------
+const modal = document.getElementById("productModal");
+document.getElementById("addProductBtn").onclick = () => modal.style.display = "flex";
+document.getElementById("cancelBtn").onclick = () => modal.style.display = "none";
+window.onclick = (e) => { if (e.target === modal) modal.style.display = "none"; };
+
+// ---------- Login Check & Initialize Filters ----------
+document.addEventListener("DOMContentLoaded", () => {
+  // Check server session instead of localStorage
+  (async () => {
+    try {
+      const res = await fetch('/api/current-user', { credentials: 'include' });
+      if (!res.ok) {
+        window.location.href = 'login.html';
+      }
+      // If ok, populate categories and load products
+      await populateCategories();
+    } catch (err) {
+      window.location.href = 'login.html';
+    }
+  })();
+  
+  // Wire up search & category filter events
+  const searchInput = document.getElementById('searchInput');
+  const categoryFilter = document.getElementById('categoryFilter');
+  const clearBtn = document.getElementById('clearFilters');
+  if (searchInput) {
+    let searchTimeout;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => loadProducts(), 300);
+    });
+  }
+  if (categoryFilter) {
+    categoryFilter.addEventListener('change', () => loadProducts());
+  }
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      if (searchInput) searchInput.value = '';
+      if (categoryFilter) categoryFilter.value = '';
+      loadProducts();
+    });
+  }
+});
+
+// ---------- Logout Button ----------
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  // Call server to destroy session and then redirect
+  (async () => {
+    try {
+      await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+    } catch (err) {
+      console.error('Logout request failed', err);
+    }
+    window.location.href = 'login.html';
+  })();
+});
+</script>
+
+</body>
+</html>
+
+
+  
+
+
+
+  
+
+
+
