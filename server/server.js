@@ -488,18 +488,33 @@ app.post("/api/register", async (req, res) => {
       // Signup successful - send verification email
       console.log(`✅ User ${email} registered successfully`);
       
-      // Send verification email
-      try {
-        await sendVerificationEmail(email, verification_token);
+      // In production, send verification email. In local dev, user is auto-verified
+      if (process.env.NODE_ENV === 'production') {
+        // Production: Send verification email
+        try {
+          await sendVerificationEmail(email, verification_token);
+          res.json({ 
+            message: "Signup successful! Please check your email to verify your account.",
+            success: true
+          });
+        } catch (emailError) {
+          console.error("❌ Failed to send verification email:", emailError);
+          res.json({ 
+            message: "Signup successful! Verification email sent (check spam folder).",
+            success: true
+          });
+        }
+      } else {
+        // Local development: Auto-verified, but still send email for testing
+        try {
+          await sendVerificationEmail(email, verification_token);
+          console.log(`✅ Verification email sent to ${email} via SendGrid`);
+        } catch (emailError) {
+          console.error("❌ Failed to send verification email:", emailError);
+        }
+        // User is auto-verified in local dev
         res.json({ 
-          message: "Signup successful! Please check your email to verify your account.",
-          success: true
-        });
-      } catch (emailError) {
-        console.error("❌ Failed to send verification email:", emailError);
-        // Still return success - user can login after verifying later
-        res.json({ 
-          message: "Signup successful! Verification email sent (check spam folder).",
+          message: "Signup successful! You can now login.",
           success: true
         });
       }
