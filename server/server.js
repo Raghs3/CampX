@@ -246,6 +246,10 @@ async function sendVerificationEmail(email, token, fullName) {
 // ====== AI PRICE PREDICTION ======
 const { predictPrice } = require('./price_prediction');
 
+// ====== AI IMAGE ANALYSIS ======
+// DISABLED: Uncomment when merging feature/ai-image-verification branch
+// const { analyzeImage } = require('./image_analysis');
+
 /**
  * POST /api/predict-price
  * Predict fair price for a product using Gemini AI
@@ -310,6 +314,75 @@ app.get("/api/price-categories", (req, res) => {
     ]
   });
 });
+
+/**
+ * POST /api/upload-temp-image
+ * Upload a temporary image for AI analysis (before product creation)
+ */
+app.post("/api/upload-temp-image", upload.single('image1'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image file uploaded' });
+    }
+    
+    const imagePath = path.join(__dirname, '..', 'uploads', req.file.filename);
+    console.log(`📸 Temp image uploaded: ${imagePath}`);
+    
+    res.json({ 
+      success: true,
+      imagePath: imagePath
+    });
+  } catch (error) {
+    console.error('Temp image upload error:', error);
+    res.status(500).json({ error: 'Failed to upload image' });
+  }
+});
+
+/* DISABLED: AI Image Analysis - Uncomment when merging feature/ai-image-verification branch
+/**
+ * POST /api/analyze-image
+ * Analyze uploaded product image(s) using Gemini Vision AI
+ * Returns: product details, category, condition, price, legitimacy check
+ */
+/*
+app.post("/api/analyze-image", async (req, res) => {
+  try {
+    const { imagePath, imagePaths } = req.body;
+    
+    // Support both single path and multiple paths
+    const paths = imagePaths || (imagePath ? [imagePath] : null);
+    
+    if (!paths || paths.length === 0) {
+      return res.status(400).json({ 
+        error: 'At least one image path is required' 
+      });
+    }
+    
+    console.log(`🔍 Analyzing ${paths.length} image(s)`);
+    
+    // Call AI image analyzer with all images
+    const analysis = await analyzeImage(paths);
+    
+    // Add shadow ban flag if not legitimate
+    if (!analysis.is_legitimate || analysis.legitimacy_score < 70) {
+      analysis.shadow_banned = true;
+      analysis.admin_review_required = true;
+      console.warn(`⚠️ Suspicious image flagged: ${analysis.flag_reason}`);
+    } else {
+      analysis.shadow_banned = false;
+      analysis.admin_review_required = false;
+    }
+    
+    res.json(analysis);
+  } catch (error) {
+    console.error('❌ Image analysis error:', error);
+    res.status(500).json({ 
+      error: 'Failed to analyze image',
+      message: error.message 
+    });
+  }
+});
+*/
 
 // AUTH ROUTES (Signup + Login)
 
@@ -657,21 +730,74 @@ app.delete("/api/admin/users/:userId", requireAdmin, (req, res) => {
     return res.status(400).json({ message: "Cannot delete your own account" });
   }
 
-  // Delete user's products first
-  db.run('DELETE FROM products WHERE seller_id = ?', [userId], (err) => {
-    if (err) console.error('Error deleting products:', err);
+  // CASCADING DELETE ORDER (to satisfy foreign key constraints):
+  // 1. Delete reviews for user's products
+  // 2. Delete sold_items for user's products
+  // 3. Delete wishlist entries for user's products
+  // 4. Delete messages for user's products
+  // 5. Delete user's products
+  // 6. Delete reviews where user is seller or buyer
+  // 7. Delete sold_items where user is seller or buyer
+  // 8. Delete user's wishlist entries
+  // 9. Delete user's messages
+  // 10. Delete user's success stories
+  // 11. Finally, delete the user
+
+  // 1. Delete reviews for user's products
+  db.run('DELETE FROM reviews WHERE product_id IN (SELECT product_id FROM products WHERE seller_id = ?)', [userId], (reviewsProdErr) => {
+    if (reviewsProdErr) console.warn('⚠️ Error deleting reviews for user products:', reviewsProdErr);
     
-    // Delete user's messages
-    db.run('DELETE FROM messages WHERE sender_id = ? OR receiver_id = ?', [userId, userId], (err2) => {
-      if (err2) console.error('Error deleting messages:', err2);
+    // 2. Delete sold_items for user's products
+    db.run('DELETE FROM sold_items WHERE product_id IN (SELECT product_id FROM products WHERE seller_id = ?)', [userId], (soldProdErr) => {
+      if (soldProdErr) console.warn('⚠️ Error deleting sold_items for user products:', soldProdErr);
       
-      // Delete user
-      db.run('DELETE FROM users WHERE user_id = ?', [userId], function(err3) {
-        if (err3) {
-          console.error('Error deleting user:', err3);
-          return res.status(500).json({ message: "Error deleting user" });
-        }
-        res.json({ message: "User deleted successfully" });
+      // 3. Delete wishlist entries for user's products
+      db.run('DELETE FROM wishlist WHERE product_id IN (SELECT product_id FROM products WHERE seller_id = ?)', [userId], (wishlistErr) => {
+        if (wishlistErr) console.warn('⚠️ Error deleting wishlist entries:', wishlistErr);
+        
+        // 4. Delete messages for user's products (item_id is the column name, not product_id)
+        db.run('DELETE FROM messages WHERE item_id IN (SELECT product_id FROM products WHERE seller_id = ?)', [userId], (prodMsgErr) => {
+          if (prodMsgErr) console.warn('⚠️ Error deleting product messages:', prodMsgErr);
+          
+          // 5. Delete user's products
+          db.run('DELETE FROM products WHERE seller_id = ?', [userId], (err) => {
+            if (err) console.error('Error deleting products:', err);
+            
+            // 6. Delete reviews where user is seller or buyer
+            db.run('DELETE FROM reviews WHERE seller_id = ? OR buyer_id = ?', [userId, userId], (reviewsErr) => {
+              if (reviewsErr) console.warn('⚠️ Error deleting user reviews:', reviewsErr);
+              
+              // 7. Delete sold_items where user is seller or buyer
+              db.run('DELETE FROM sold_items WHERE seller_id = ? OR buyer_id = ?', [userId, userId], (soldErr) => {
+                if (soldErr) console.warn('⚠️ Error deleting user sold_items:', soldErr);
+                
+                // 8. Delete user's wishlist entries as a buyer
+                db.run('DELETE FROM wishlist WHERE user_id = ?', [userId], (wishErr2) => {
+                  if (wishErr2) console.warn('⚠️ Error deleting user wishlist:', wishErr2);
+                  
+                  // 9. Delete user's messages
+                  db.run('DELETE FROM messages WHERE sender_id = ? OR receiver_id = ?', [userId, userId], (err2) => {
+                    if (err2) console.error('Error deleting messages:', err2);
+                    
+                    // 10. Delete user's success stories
+                    db.run('DELETE FROM success_stories WHERE student_id = ?', [userId], (storiesErr) => {
+                      if (storiesErr) console.warn('⚠️ Error deleting success stories:', storiesErr);
+                      
+                      // 11. Finally, delete the user
+                      db.run('DELETE FROM users WHERE user_id = ?', [userId], function(err3) {
+                        if (err3) {
+                          console.error('Error deleting user:', err3);
+                          return res.status(500).json({ message: "Error deleting user" });
+                        }
+                        res.json({ message: "User deleted successfully" });
+                      });
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
       });
     });
   });
@@ -697,12 +823,48 @@ app.get("/api/admin/products", requireAdmin, (req, res) => {
 app.delete("/api/admin/products/:productId", requireAdmin, (req, res) => {
   const { productId } = req.params;
 
-  db.run('DELETE FROM products WHERE product_id = ?', [productId], function(err) {
-    if (err) {
-      console.error('Error deleting product:', err);
-      return res.status(500).json({ message: "Error deleting product" });
+  // CASCADING DELETE ORDER (to satisfy foreign key constraints):
+  // 1. Delete reviews for this product
+  // 2. Delete sold_items for this product
+  // 3. Delete wishlist entries for this product
+  // 4. Delete messages for this product
+  // 5. Finally, delete the product
+
+  // 1. Delete reviews for this product
+  db.run('DELETE FROM reviews WHERE product_id = ?', [productId], function(reviewsErr) {
+    if (reviewsErr) {
+      console.warn(`⚠️ Failed to delete reviews for product ${productId}:`, reviewsErr.message);
     }
-    res.json({ message: "Product deleted successfully" });
+    
+    // 2. Delete sold_items for this product
+    db.run('DELETE FROM sold_items WHERE product_id = ?', [productId], function(soldErr) {
+      if (soldErr) {
+        console.warn(`⚠️ Failed to delete sold_items for product ${productId}:`, soldErr.message);
+      }
+      
+      // 3. Delete wishlist entries
+      db.run('DELETE FROM wishlist WHERE product_id = ?', [productId], function(wishlistErr) {
+        if (wishlistErr) {
+          console.warn(`⚠️ Failed to delete wishlist entries for product ${productId}:`, wishlistErr.message);
+        }
+        
+        // 4. Delete messages related to this product (item_id is the column name, not product_id)
+        db.run('DELETE FROM messages WHERE item_id = ?', [productId], function(messagesErr) {
+          if (messagesErr) {
+            console.warn(`⚠️ Failed to delete messages for product ${productId}:`, messagesErr.message);
+          }
+          
+          // 5. Now delete the product
+          db.run('DELETE FROM products WHERE product_id = ?', [productId], function(err) {
+            if (err) {
+              console.error('Error deleting product:', err);
+              return res.status(500).json({ message: "Error deleting product" });
+            }
+            res.json({ message: "Product deleted successfully" });
+          });
+        });
+      });
+    });
   });
 });
 
@@ -892,6 +1054,41 @@ app.post("/api/resend-verification", async (req, res) => {
   });
 });
 
+/* DISABLED: AI Image Analysis - Uncomment when merging feature/ai-image-verification branch
+/**
+ * POST /api/upload-temp-images
+ * Upload images temporarily for AI analysis (before product creation)
+ */
+/*
+app.post("/api/upload-temp-images", requireAuth, upload.any(), (req, res) => {
+  try {
+    const filesArray = req.files || [];
+    
+    if (filesArray.length === 0) {
+      return res.status(400).json({ error: 'No images uploaded' });
+    }
+
+    // Get absolute paths for all uploaded images
+    const imagePaths = filesArray.map(f => {
+      return path.join(__dirname, '..', 'uploads', path.basename(f.path));
+    });
+
+    console.log(`📤 Uploaded ${imagePaths.length} temp image(s) for AI analysis`);
+    
+    res.json({ 
+      imagePaths,
+      count: imagePaths.length 
+    });
+  } catch (error) {
+    console.error('❌ Temp image upload error:', error);
+    res.status(500).json({ 
+      error: 'Failed to upload images',
+      message: error.message 
+    });
+  }
+});
+*/
+
 // PRODUCTS ROUTES
 // Add a new product (requires authentication and verified email)
 app.post("/api/products", requireVerifiedEmail, upload.any(), (req, res) => {
@@ -990,9 +1187,49 @@ app.delete("/api/products/:id", requireVerifiedEmail, (req, res) => {
     }
 
     deletedStack.push(row);
-    db.run("DELETE FROM products WHERE product_id = ?", [id], function (err) {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ message: "Product deleted", undoAvailable: deletedStack.length > 0 });
+    
+    // CASCADING DELETE ORDER (to satisfy foreign key constraints):
+    // 1. Delete reviews for this product
+    // 2. Delete sold_items for this product
+    // 3. Delete wishlist entries for this product
+    // 4. Delete messages for this product
+    // 5. Finally, delete the product
+    
+    // 1. Delete reviews for this product
+    db.run("DELETE FROM reviews WHERE product_id = ?", [id], function (reviewsErr) {
+      if (reviewsErr) {
+        console.warn(`⚠️ Failed to delete reviews for product ${id}:`, reviewsErr.message);
+      }
+      
+      // 2. Delete sold_items for this product
+      db.run("DELETE FROM sold_items WHERE product_id = ?", [id], function (soldErr) {
+        if (soldErr) {
+          console.warn(`⚠️ Failed to delete sold_items for product ${id}:`, soldErr.message);
+        }
+        
+        // 3. Delete wishlist entries for this product
+        db.run("DELETE FROM wishlist WHERE product_id = ?", [id], function (wishlistErr) {
+          if (wishlistErr) {
+            console.warn(`⚠️ Failed to delete wishlist entries for product ${id}:`, wishlistErr.message);
+          }
+          
+          // 4. Delete messages related to this product (item_id is the column name, not product_id)
+          db.run("DELETE FROM messages WHERE item_id = ?", [id], function (messagesErr) {
+            if (messagesErr) {
+              console.warn(`⚠️ Failed to delete messages for product ${id}:`, messagesErr.message);
+            }
+            
+            // 5. Now delete the product itself
+            db.run("DELETE FROM products WHERE product_id = ?", [id], function (err) {
+              if (err) {
+                console.error(`❌ DB.run error: ${err.message}\n   Query: DELETE FROM products WHERE product_id = ?`);
+                return res.status(500).json({ error: err.message });
+              }
+              res.json({ message: "Product deleted", undoAvailable: deletedStack.length > 0 });
+            });
+          });
+        });
+      });
     });
   });
 });
