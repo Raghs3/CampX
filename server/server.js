@@ -163,14 +163,38 @@ async function sendVerificationEmail(email, token, fullName) {
     
     console.log('📨 Creating email transporter...');
     
-    // Create transporter based on service
-    const transporter = nodemailer.createTransport({
-      service: process.env.EMAIL_SERVICE, // 'gmail', 'outlook', etc.
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD
-      }
-    });
+    // Create transporter configuration
+    let transportConfig;
+    
+    // Check if using SendGrid (recommended for Render)
+    if (process.env.SENDGRID_API_KEY) {
+      // SendGrid configuration (works on Render free tier)
+      const nodemailerSendgrid = require('nodemailer-sendgrid');
+      transportConfig = nodemailerSendgrid({
+        apiKey: process.env.SENDGRID_API_KEY
+      });
+    } else if (process.env.NODE_ENV === 'production') {
+      // For production without SendGrid, disable email verification
+      console.warn('⚠️ SENDGRID_API_KEY not set. Email verification disabled in production.');
+      console.warn('📋 To enable emails on Render:');
+      console.warn('   1. Sign up at https://sendgrid.com (free tier: 100 emails/day)');
+      console.warn('   2. Create an API key');
+      console.warn('   3. Add SENDGRID_API_KEY to Render environment variables');
+      const baseUrl = process.env.BASE_URL || `http://${HOST}:${PORT}`;
+      console.warn(`   Verification link: ${baseUrl}/verify-email?token=${token}`);
+      return false;
+    } else {
+      // For local development, use Gmail/Outlook
+      transportConfig = {
+        service: process.env.EMAIL_SERVICE, // 'gmail', 'outlook', etc.
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD
+        }
+      };
+    }
+    
+    const transporter = nodemailer.createTransport(transportConfig);
 
     // Verification link
     const baseUrl = process.env.BASE_URL || `http://${HOST}:${PORT}`;
@@ -178,7 +202,7 @@ async function sendVerificationEmail(email, token, fullName) {
 
     // Email options
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: process.env.SENDGRID_API_KEY ? 'noreply@campx.com' : process.env.EMAIL_USER,
       to: email,
       subject: 'CampX Marketplace - Verify Your Email',
       html: `

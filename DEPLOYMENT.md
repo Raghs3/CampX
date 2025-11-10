@@ -43,18 +43,30 @@ Your app is now ready to deploy! Here are the **FREE** hosting options:
    - Go to "Environment" tab in your Web Service
    - Add these variables:
      ```
-     EMAIL_SERVICE=gmail
-     EMAIL_USER=your-email@vit.edu
-     EMAIL_PASSWORD=your-app-password-here
      BASE_URL=https://campx-marketplace.onrender.com
      HOST=0.0.0.0
      NODE_ENV=production
      DATABASE_URL=<paste-your-internal-database-url-here>
      SESSION_SECRET=<generate-a-random-secret-key>
+     SENDGRID_API_KEY=<your-sendgrid-api-key>
      ```
    - **Important:** 
      - Use the "Internal Database URL" from your PostgreSQL database
      - Generate a random SESSION_SECRET (e.g., use a password generator)
+     - **For email verification to work**, get a SendGrid API key (see below)
+
+4a. **Setup SendGrid for Email Verification (Optional but Recommended)**
+   - **Why?** Render blocks Gmail/Outlook SMTP ports for security
+   - **Solution:** Use SendGrid (free tier: 100 emails/day)
+   - **Steps:**
+     1. Go to https://sendgrid.com and sign up (free)
+     2. Verify your email
+     3. Go to Settings → API Keys
+     4. Click "Create API Key"
+     5. Name it "CampX" and give "Full Access"
+     6. Copy the API key
+     7. Add `SENDGRID_API_KEY=<your-key>` to Render environment variables
+   - **Note:** Without SendGrid, users can still register but won't receive verification emails
 
 5. **Deploy!**
    - Click "Create Web Service"
