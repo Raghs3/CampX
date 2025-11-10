@@ -330,6 +330,7 @@ select.theme-select {
     <button id="wishlistNavBtn" class="add-btn">My Wishlist</button>
     <button id="soldNavBtn" class="add-btn">Sold Items</button>
     <button id="myReviewsBtn" class="add-btn">My Reviews</button>
+    <button id="profileBtn" class="add-btn">👤 Profile</button>
     <button id="logoutBtn" class="logout-btn">Logout</button>
   </div>
 </header>
@@ -541,6 +542,11 @@ document.addEventListener("DOMContentLoaded", () => {
       loadProducts();
     });
   }
+});
+
+// ---------- Profile Button ----------
+document.getElementById("profileBtn").addEventListener("click", () => {
+  window.location.href = 'profile.html';
 });
 
 // ---------- Logout Button ----------

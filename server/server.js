@@ -432,6 +432,62 @@ app.get("/api/current-user", (req, res) => {
   else res.status(401).json({ message: "No user logged in" });
 });
 
+// Update user profile
+app.put("/api/profile", requireAuth, async (req, res) => {
+  const { full_name, phone, new_password } = req.body;
+  const userId = req.session.user.user_id;
+
+  try {
+    // Validate input
+    if (!full_name || full_name.trim().length === 0) {
+      return res.status(400).json({ message: "Full name is required" });
+    }
+
+    // If changing password, hash it
+    let updates = {
+      full_name: full_name.trim(),
+      phone: phone || null
+    };
+
+    if (new_password) {
+      if (new_password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters" });
+      }
+      const password_hash = await bcrypt.hash(new_password, 10);
+      updates.password_hash = password_hash;
+    }
+
+    // Build SQL query dynamically
+    const fields = Object.keys(updates);
+    const values = Object.values(updates);
+    const setClause = fields.map(field => `${field} = ?`).join(', ');
+    
+    db.run(
+      `UPDATE users SET ${setClause} WHERE user_id = ?`,
+      [...values, userId],
+      function(err) {
+        if (err) {
+          console.error('Failed to update profile:', err);
+          return res.status(500).json({ message: "Failed to update profile" });
+        }
+
+        // Update session data
+        req.session.user.full_name = updates.full_name;
+        req.session.user.phone = updates.phone;
+
+        console.log(`✅ Profile updated for user ${userId}`);
+        res.json({ 
+          message: new_password ? "Profile and password updated successfully!" : "Profile updated successfully!",
+          user: req.session.user
+        });
+      }
+    );
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // Logout (destroy session)
 app.post("/api/logout", (req, res) => {
   req.session.destroy(() => {

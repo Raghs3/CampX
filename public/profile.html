@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Profile | CampX</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+      color: #ffffff;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 2.5rem;
+      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+      backdrop-filter: blur(8px);
+      animation: fadeIn 0.8s ease;
+    }
+
+    h2 {
+      color: #00d4ff;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #b0b0b0;
+      font-size: 14px;
+      margin-bottom: 2rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      color: #00d4ff;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      font-size: 15px;
+      outline: none;
+      transition: 0.3s;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    input:focus, textarea:focus {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    input:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .avatar-section {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .avatar-preview {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      margin: 0 auto 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      border: 3px solid #00d4ff;
+    }
+
+    .avatar-preview img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #00b4d8, #007bff);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      background: linear-gradient(135deg, #007bff, #00b4d8);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .back-btn {
+      background: rgba(255, 255, 255, 0.1);
+      margin-bottom: 15px;
+    }
+
+    .back-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .message {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 8px;
+      display: none;
+      text-align: center;
+    }
+
+    .success {
+      background: rgba(76, 175, 80, 0.2);
+      color: #4caf50;
+    }
+
+    .error {
+      background: rgba(244, 67, 54, 0.2);
+      color: #f44336;
+    }
+
+    .info-text {
+      font-size: 12px;
+      color: #888;
+      margin-top: 5px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>📝 Edit Profile</h2>
+    <p class="subtitle">Update your account information</p>
+
+    <div class="avatar-section">
+      <div class="avatar-preview" id="avatarPreview">
+        👤
+      </div>
+      <p class="info-text">Avatar will be your initials</p>
+    </div>
+
+    <form id="profileForm">
+      <div class="form-group">
+        <label>Full Name *</label>
+        <input type="text" id="fullName" required>
+      </div>
+
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="email" disabled>
+        <p class="info-text">Email cannot be changed</p>
+      </div>
+
+      <div class="form-group">
+        <label>Phone Number</label>
+        <input type="tel" id="phone" placeholder="Optional">
+      </div>
+
+      <div class="form-group">
+        <label>Change Password</label>
+        <input type="password" id="newPassword" placeholder="Leave blank to keep current password">
+        <p class="info-text">Minimum 6 characters</p>
+      </div>
+
+      <div class="form-group">
+        <label>Confirm New Password</label>
+        <input type="password" id="confirmPassword" placeholder="Confirm if changing password">
+      </div>
+
+      <button type="submit" id="saveBtn">💾 Save Changes</button>
+      <button type="button" class="back-btn" onclick="window.location.href='index.html'">← Back to Home</button>
+
+      <div class="message" id="message"></div>
+    </form>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin;
+    const profileForm = document.getElementById('profileForm');
+    const saveBtn = document.getElementById('saveBtn');
+    const message = document.getElementById('message');
+    
+    const fullNameInput = document.getElementById('fullName');
+    const emailInput = document.getElementById('email');
+    const phoneInput = document.getElementById('phone');
+    const newPasswordInput = document.getElementById('newPassword');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+    const avatarPreview = document.getElementById('avatarPreview');
+
+    // Load current user data
+    async function loadProfile() {
+      try {
+        const response = await fetch(`${API_BASE}/api/current-user`, {
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          window.location.href = 'login.html';
+          return;
+        }
+
+        const data = await response.json();
+        const user = data.user;
+
+        fullNameInput.value = user.full_name || '';
+        emailInput.value = user.email || '';
+        phoneInput.value = user.phone || '';
+
+        // Update avatar with initials
+        if (user.full_name) {
+          const initials = user.full_name
+            .split(' ')
+            .map(n => n[0])
+            .join('')
+            .toUpperCase()
+            .substring(0, 2);
+          avatarPreview.textContent = initials;
+        }
+      } catch (error) {
+        console.error('Failed to load profile:', error);
+        showMessage('Failed to load profile data', 'error');
+      }
+    }
+
+    // Handle form submission
+    profileForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const fullName = fullNameInput.value.trim();
+      const phone = phoneInput.value.trim();
+      const newPassword = newPasswordInput.value;
+      const confirmPassword = confirmPasswordInput.value;
+
+      if (!fullName) {
+        showMessage('Full name is required', 'error');
+        return;
+      }
+
+      // Validate password if changing
+      if (newPassword || confirmPassword) {
+        if (newPassword !== confirmPassword) {
+          showMessage('Passwords do not match', 'error');
+          return;
+        }
+        if (newPassword.length < 6) {
+          showMessage('Password must be at least 6 characters', 'error');
+          return;
+        }
+      }
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+
+      try {
+        const updateData = {
+          full_name: fullName,
+          phone: phone || null
+        };
+
+        if (newPassword) {
+          updateData.new_password = newPassword;
+        }
+
+        const response = await fetch(`${API_BASE}/api/profile`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(updateData)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          showMessage('✅ ' + data.message, 'success');
+          newPasswordInput.value = '';
+          confirmPasswordInput.value = '';
+          
+          // Update avatar
+          const initials = fullName
+            .split(' ')
+            .map(n => n[0])
+            .join('')
+            .toUpperCase()
+            .substring(0, 2);
+          avatarPreview.textContent = initials;
+        } else {
+          showMessage(data.message || 'Failed to update profile', 'error');
+        }
+      } catch (error) {
+        showMessage('Network error. Please try again.', 'error');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = '💾 Save Changes';
+      }
+    });
+
+    function showMessage(text, type) {
+      message.textContent = text;
+      message.className = `message ${type}`;
+      message.style.display = 'block';
+    }
+
+    // Load profile on page load
+    loadProfile();
+  </script>
+</body>
+</html>
