@@ -50,8 +50,11 @@ Your app is now ready to deploy! Here are the **FREE** hosting options:
      HOST=0.0.0.0
      NODE_ENV=production
      DATABASE_URL=<paste-your-internal-database-url-here>
+     SESSION_SECRET=<generate-a-random-secret-key>
      ```
-   - **Important:** Use the "Internal Database URL" from your PostgreSQL database
+   - **Important:** 
+     - Use the "Internal Database URL" from your PostgreSQL database
+     - Generate a random SESSION_SECRET (e.g., use a password generator)
 
 5. **Deploy!**
    - Click "Create Web Service"

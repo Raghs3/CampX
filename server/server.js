@@ -36,12 +36,38 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 
-// Session Middleware
+// Session Middleware with proper store
+let sessionStore;
+if (process.env.DATABASE_URL) {
+  // Use PostgreSQL session store in production
+  const pgSession = require('connect-pg-simple')(session);
+  const { Pool } = require('pg');
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+  });
+  sessionStore = new pgSession({
+    pool: pool,
+    tableName: 'session' // Will create this table automatically
+  });
+} else {
+  // Use SQLite session store for local development
+  const SQLiteStore = require('connect-sqlite3')(session);
+  sessionStore = new SQLiteStore({
+    db: 'sessions.db',
+    dir: __dirname
+  });
+}
+
 app.use(session({
-  secret: "campx_secret_key",
+  store: sessionStore,
+  secret: process.env.SESSION_SECRET || "campx_secret_key",
   resave: false,
-  saveUninitialized: true,
-  cookie: { secure: false } // HTTPS → true
+  saveUninitialized: false,
+  cookie: { 
+    secure: process.env.NODE_ENV === 'production', // HTTPS in production
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+  }
 }));
 
 // Serve static files from public directory (HTML files)
@@ -198,7 +224,10 @@ app.post("/api/register", async (req, res) => {
   db.run(query, [full_name, email, password_hash, phone, verification_token, token_expires], async function (err) {
     if (err) {
       console.error("Signup DB Error:", err.message);
-      if (err.message.includes("UNIQUE constraint failed")) {
+      // Handle duplicate email error for both SQLite and PostgreSQL
+      if (err.message.includes("UNIQUE constraint failed") || 
+          err.message.includes("duplicate key value") || 
+          err.code === '23505') {
         return res.status(400).json({ message: "Email already exists!" });
       }
       return res.status(500).json({ message: "Database error: " + err.message });
