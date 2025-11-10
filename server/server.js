@@ -755,8 +755,8 @@ app.delete("/api/admin/users/:userId", requireAdmin, (req, res) => {
       db.run('DELETE FROM wishlist WHERE product_id IN (SELECT product_id FROM products WHERE seller_id = ?)', [userId], (wishlistErr) => {
         if (wishlistErr) console.warn('⚠️ Error deleting wishlist entries:', wishlistErr);
         
-        // 4. Delete messages for user's products
-        db.run('DELETE FROM messages WHERE product_id IN (SELECT product_id FROM products WHERE seller_id = ?)', [userId], (prodMsgErr) => {
+        // 4. Delete messages for user's products (item_id is the column name, not product_id)
+        db.run('DELETE FROM messages WHERE item_id IN (SELECT product_id FROM products WHERE seller_id = ?)', [userId], (prodMsgErr) => {
           if (prodMsgErr) console.warn('⚠️ Error deleting product messages:', prodMsgErr);
           
           // 5. Delete user's products
@@ -848,8 +848,8 @@ app.delete("/api/admin/products/:productId", requireAdmin, (req, res) => {
           console.warn(`⚠️ Failed to delete wishlist entries for product ${productId}:`, wishlistErr.message);
         }
         
-        // 4. Delete messages related to this product
-        db.run('DELETE FROM messages WHERE product_id = ?', [productId], function(messagesErr) {
+        // 4. Delete messages related to this product (item_id is the column name, not product_id)
+        db.run('DELETE FROM messages WHERE item_id = ?', [productId], function(messagesErr) {
           if (messagesErr) {
             console.warn(`⚠️ Failed to delete messages for product ${productId}:`, messagesErr.message);
           }
@@ -1213,8 +1213,8 @@ app.delete("/api/products/:id", requireVerifiedEmail, (req, res) => {
             console.warn(`⚠️ Failed to delete wishlist entries for product ${id}:`, wishlistErr.message);
           }
           
-          // 4. Delete messages related to this product
-          db.run("DELETE FROM messages WHERE product_id = ?", [id], function (messagesErr) {
+          // 4. Delete messages related to this product (item_id is the column name, not product_id)
+          db.run("DELETE FROM messages WHERE item_id = ?", [id], function (messagesErr) {
             if (messagesErr) {
               console.warn(`⚠️ Failed to delete messages for product ${id}:`, messagesErr.message);
             }
