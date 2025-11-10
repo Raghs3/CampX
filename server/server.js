@@ -120,27 +120,8 @@ function requireAuth(req, res, next) {
   next();
 }
 
-// Middleware to check if user's email is verified
-function requireVerifiedEmail(req, res, next) {
-  if (!req.session.user) {
-    return res.status(401).json({ error: 'Authentication required. Please log in.' });
-  }
-  
-  // Check if user exists and is verified in database
-  db.get('SELECT email_verified FROM users WHERE user_id = ?', [req.session.user.user_id], (err, user) => {
-    if (err || !user) {
-      req.session.destroy();
-      return res.status(401).json({ error: 'Invalid session. Please log in again.' });
-    }
-    
-    if (!user.email_verified) {
-      req.session.destroy();
-      return res.status(403).json({ error: 'Email not verified. Please verify your email first.' });
-    }
-    
-    next();
-  });
-}
+// For backwards compatibility - just use requireAuth (no email verification needed)
+const requireVerifiedEmail = requireAuth;
 
 // ====== EMAIL VERIFICATION FUNCTION ======
 async function sendVerificationEmail(email, token, fullName) {
@@ -202,7 +183,7 @@ async function sendVerificationEmail(email, token, fullName) {
 
     // Email options
     const mailOptions = {
-      from: process.env.SENDGRID_API_KEY ? 'noreply@campx.com' : process.env.EMAIL_USER,
+      from: process.env.SENDGRID_SENDER_EMAIL || process.env.EMAIL_USER || 'noreply@campx.com',
       to: email,
       subject: 'CampX Marketplace - Verify Your Email',
       html: `
@@ -250,44 +231,61 @@ app.post("/api/register", async (req, res) => {
   if (!full_name || !email || !password)
     return res.status(400).json({ message: "All fields required" });
 
-  const password_hash = bcrypt.hashSync(password, 10);
-  
-  // Generate verification token
-  const verification_token = crypto.randomBytes(32).toString('hex');
-  const token_expires = Date.now() + (24 * 60 * 60 * 1000); // 24 hours from now
+  // Validate VIT email domain
+  if (!email.toLowerCase().endsWith('@vit.edu')) {
+    return res.status(400).json({ 
+      message: "Only VIT students can register. Please use your @vit.edu email address." 
+    });
+  }
 
-  const query = `
-    INSERT INTO users (full_name, email, password_hash, phone, email_verified, verification_token, token_expires)
-    VALUES (?, ?, ?, ?, 0, ?, ?)
-    RETURNING user_id
-  `;
-
-  db.run(query, [full_name, email, password_hash, phone, verification_token, token_expires], async function (err) {
+  // Check if user already exists BEFORE creating
+  db.get('SELECT email FROM users WHERE email = ?', [email], (err, existingUser) => {
     if (err) {
-      console.error("Signup DB Error:", err.message);
-      // Handle duplicate email error for both SQLite and PostgreSQL
-      if (err.message.includes("UNIQUE constraint failed") || 
-          err.message.includes("duplicate key value") || 
-          err.code === '23505') {
-        return res.status(400).json({ message: "Email already exists!" });
-      }
       return res.status(500).json({ message: "Database error: " + err.message });
     }
     
-    // Send verification email
-    const emailSent = await sendVerificationEmail(email, verification_token, full_name);
-    
-    if (emailSent) {
-      res.json({ 
-        message: "Signup successful! Please check your email to verify your account.",
-        emailSent: true
-      });
-    } else {
-      res.json({ 
-        message: "Signup successful! However, we couldn't send the verification email. Please contact support.",
-        emailSent: false
+    if (existingUser) {
+      return res.status(400).json({ 
+        message: "An account with this email already exists. Please login instead.",
+        userExists: true
       });
     }
+
+    // Proceed with signup
+    const password_hash = bcrypt.hashSync(password, 10);
+    
+    // Generate verification token
+    const verification_token = crypto.randomBytes(32).toString('hex');
+    const token_expires = Date.now() + (24 * 60 * 60 * 1000); // 24 hours from now
+
+    // Auto-verify users in production if no email service is configured
+    const autoVerify = process.env.NODE_ENV === 'production' ? 1 : 0;
+
+    const query = `
+      INSERT INTO users (full_name, email, password_hash, phone, email_verified, verification_token, token_expires)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+      RETURNING user_id
+    `;
+
+    db.run(query, [full_name, email, password_hash, phone, autoVerify, verification_token, token_expires], async function (err) {
+      if (err) {
+        console.error("Signup DB Error:", err.message);
+        // Handle duplicate email error for both SQLite and PostgreSQL
+        if (err.message.includes("UNIQUE constraint failed") || 
+            err.message.includes("duplicate key value") || 
+            err.code === '23505') {
+          return res.status(400).json({ message: "Email already exists!" });
+        }
+        return res.status(500).json({ message: "Database error: " + err.message });
+      }
+      
+      // Signup successful - users are auto-verified (no email verification needed)
+      console.log(`✅ User ${email} registered successfully`);
+      res.json({ 
+        message: "Signup successful! You can now login.",
+        success: true
+      });
+    });
   });
 });
 
@@ -303,16 +301,7 @@ app.post("/api/login", (req, res) => {
     const valid = bcrypt.compareSync(password, user.password_hash);
     if (!valid) return res.status(401).json({ message: "Invalid password!" });
 
-    // Check if email is verified
-    if (!user.email_verified) {
-      return res.status(403).json({ 
-        message: "Please verify your email before logging in. Check your inbox for the verification link.",
-        emailVerified: false,
-        canResend: true
-      });
-    }
-
-    // Save session
+    // Save session (no email verification check needed)
     req.session.user = {
       user_id: user.user_id,
       full_name: user.full_name,
@@ -325,6 +314,110 @@ app.post("/api/login", (req, res) => {
       user: req.session.user
     });
   });
+});
+
+// Forgot Password - Request Reset
+app.post("/api/forgot-password", (req, res) => {
+  const { email } = req.body;
+  
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  // Check if user exists
+  db.get('SELECT user_id, full_name FROM users WHERE email = ?', [email], (err, user) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error: " + err.message });
+    }
+    
+    if (!user) {
+      // Don't reveal if email exists (security best practice)
+      return res.json({ 
+        message: "If an account with that email exists, a password reset link has been sent.",
+        success: true
+      });
+    }
+
+    // Generate reset token
+    const reset_token = crypto.randomBytes(32).toString('hex');
+    const token_expires = Date.now() + (60 * 60 * 1000); // 1 hour from now
+
+    // Save reset token to database
+    db.run(
+      'UPDATE users SET verification_token = ?, token_expires = ? WHERE user_id = ?',
+      [reset_token, token_expires, user.user_id],
+      (updateErr) => {
+        if (updateErr) {
+          return res.status(500).json({ message: "Failed to generate reset token" });
+        }
+
+        // In production, print the link in logs (since we don't have email)
+        const baseUrl = process.env.BASE_URL || `http://${HOST}:${PORT}`;
+        const resetLink = `${baseUrl}/reset-password.html?token=${reset_token}`;
+        
+        console.log('🔑 Password reset link for', email);
+        console.log('   Link:', resetLink);
+        console.log('   Expires in 1 hour');
+
+        res.json({ 
+          message: "Password reset instructions have been sent. Check the server logs for the reset link.",
+          success: true,
+          resetLink: process.env.NODE_ENV !== 'production' ? resetLink : undefined
+        });
+      }
+    );
+  });
+});
+
+// Reset Password - Submit New Password
+app.post("/api/reset-password", (req, res) => {
+  const { token, newPassword } = req.body;
+  
+  if (!token || !newPassword) {
+    return res.status(400).json({ message: "Token and new password are required" });
+  }
+
+  if (newPassword.length < 6) {
+    return res.status(400).json({ message: "Password must be at least 6 characters" });
+  }
+
+  // Find user with valid reset token
+  db.get(
+    'SELECT user_id, email FROM users WHERE verification_token = ? AND token_expires > ?',
+    [token, Date.now()],
+    (err, user) => {
+      if (err) {
+        return res.status(500).json({ message: "Database error: " + err.message });
+      }
+      
+      if (!user) {
+        return res.status(400).json({ 
+          message: "Invalid or expired reset token. Please request a new password reset.",
+          expired: true
+        });
+      }
+
+      // Hash new password
+      const password_hash = bcrypt.hashSync(newPassword, 10);
+
+      // Update password and clear reset token
+      db.run(
+        'UPDATE users SET password_hash = ?, verification_token = NULL, token_expires = NULL WHERE user_id = ?',
+        [password_hash, user.user_id],
+        (updateErr) => {
+          if (updateErr) {
+            return res.status(500).json({ message: "Failed to update password" });
+          }
+
+          console.log(`✅ Password reset successful for ${user.email}`);
+          res.json({ 
+            message: "Password reset successful! You can now login with your new password.",
+            success: true
+          });
+        }
+      );
+    }
+  );
 });
 
 // Get current logged-in user
