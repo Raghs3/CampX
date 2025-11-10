@@ -331,6 +331,7 @@ select.theme-select {
     <button id="soldNavBtn" class="add-btn">Sold Items</button>
     <button id="myReviewsBtn" class="add-btn">My Reviews</button>
     <button id="profileBtn" class="add-btn">👤 Profile</button>
+    <button id="adminBtn" class="add-btn" style="display:none; background:#ff6b6b;">🛡️ Admin</button>
     <button id="logoutBtn" class="logout-btn">Logout</button>
   </div>
 </header>
@@ -514,6 +515,13 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!res.ok) {
         window.location.href = 'login.html';
       }
+      const data = await res.json();
+      
+      // Show admin button if user is admin
+      if (data.user && data.user.role === 'admin') {
+        document.getElementById('adminBtn').style.display = 'inline-block';
+      }
+      
       // If ok, populate categories and load products
       await populateCategories();
     } catch (err) {
@@ -547,6 +555,11 @@ document.addEventListener("DOMContentLoaded", () => {
 // ---------- Profile Button ----------
 document.getElementById("profileBtn").addEventListener("click", () => {
   window.location.href = 'profile.html';
+});
+
+// ---------- Admin Button ----------
+document.getElementById("adminBtn").addEventListener("click", () => {
+  window.location.href = 'admin.html';
 });
 
 // ---------- Logout Button ----------

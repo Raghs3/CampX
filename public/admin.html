@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Panel | CampX</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+      color: #ffffff;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 1.5rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #00d4ff;
+    }
+
+    .header h1 {
+      color: #00d4ff;
+      font-size: 1.8rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .btn {
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #00b4d8, #007bff);
+      color: white;
+    }
+
+    .btn-danger {
+      background: #dc3545;
+      color: white;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 2rem auto;
+      padding: 0 2rem;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 15px;
+      padding: 1.5rem;
+      backdrop-filter: blur(10px);
+    }
+
+    .stat-card h3 {
+      color: #00d4ff;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-card .value {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .tab {
+      padding: 1rem 2rem;
+      background: transparent;
+      border: none;
+      color: #b0b0b0;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: 0.3s;
+    }
+
+    .tab.active {
+      color: #00d4ff;
+      border-bottom-color: #00d4ff;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    table {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      overflow: hidden;
+      border-collapse: collapse;
+    }
+
+    th {
+      background: rgba(0, 212, 255, 0.2);
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: #00d4ff;
+    }
+
+    td {
+      padding: 1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    tr:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .badge {
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .badge-admin {
+      background: #ff6b6b;
+      color: white;
+    }
+
+    .badge-student {
+      background: #4ecdc4;
+      color: white;
+    }
+
+    .badge-available {
+      background: #2ecc71;
+      color: white;
+    }
+
+    .badge-sold {
+      background: #95a5a6;
+      color: white;
+    }
+
+    .action-btns {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn-small {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.85rem;
+    }
+
+    .btn-warning {
+      background: #f39c12;
+      color: white;
+    }
+
+    .btn-success {
+      background: #2ecc71;
+      color: white;
+    }
+
+    .search-bar {
+      margin-bottom: 1.5rem;
+    }
+
+    .search-bar input {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      font-size: 1rem;
+    }
+
+    .search-bar input::placeholder {
+      color: #b0b0b0;
+    }
+
+    .message {
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    .message.success {
+      background: rgba(46, 204, 113, 0.2);
+      border: 1px solid #2ecc71;
+      color: #2ecc71;
+    }
+
+    .message.error {
+      background: rgba(231, 76, 60, 0.2);
+      border: 1px solid #e74c3c;
+      color: #e74c3c;
+    }
+
+    .product-image {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 3rem;
+      color: #00d4ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🛡️ Admin Dashboard</h1>
+    <div class="header-actions">
+      <span id="adminName" style="margin-right: 1rem; color: #00d4ff;"></span>
+      <button class="btn btn-primary" onclick="window.location.href='index.html'">← Back to Site</button>
+      <button class="btn btn-danger" id="logoutBtn">Logout</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="message" id="message"></div>
+
+    <!-- Statistics -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>Total Users</h3>
+        <div class="value" id="totalUsers">-</div>
+      </div>
+      <div class="stat-card">
+        <h3>Total Products</h3>
+        <div class="value" id="totalProducts">-</div>
+      </div>
+      <div class="stat-card">
+        <h3>Available Products</h3>
+        <div class="value" id="availableProducts">-</div>
+      </div>
+      <div class="stat-card">
+        <h3>Sold Items</h3>
+        <div class="value" id="soldProducts">-</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="users">👥 Users</button>
+      <button class="tab" data-tab="products">📦 Products</button>
+      <button class="tab" data-tab="messages">💬 Messages</button>
+    </div>
+
+    <!-- Users Tab -->
+    <div class="tab-content active" id="users">
+      <div class="search-bar">
+        <input type="text" id="userSearch" placeholder="🔍 Search users by name or email...">
+      </div>
+      <div id="usersTable">
+        <div class="loading">Loading users...</div>
+      </div>
+    </div>
+
+    <!-- Products Tab -->
+    <div class="tab-content" id="products">
+      <div class="search-bar">
+        <input type="text" id="productSearch" placeholder="🔍 Search products by title or category...">
+      </div>
+      <div id="productsTable">
+        <div class="loading">Loading products...</div>
+      </div>
+    </div>
+
+    <!-- Messages Tab -->
+    <div class="tab-content" id="messages">
+      <div class="search-bar">
+        <input type="text" id="messageSearch" placeholder="🔍 Search messages...">
+      </div>
+      <div id="messagesTable">
+        <div class="loading">Loading messages...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin;
+    let allUsers = [];
+    let allProducts = [];
+    let allMessages = [];
+
+    // Check admin authentication
+    async function checkAdminAuth() {
+      try {
+        const response = await fetch(`${API_BASE}/api/current-user`, {
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          window.location.href = 'login.html';
+          return false;
+        }
+
+        const data = await response.json();
+        if (data.user.role !== 'admin') {
+          alert('Access denied. Admin privileges required.');
+          window.location.href = 'index.html';
+          return false;
+        }
+
+        document.getElementById('adminName').textContent = `👤 ${data.user.full_name}`;
+        return true;
+      } catch (error) {
+        window.location.href = 'login.html';
+        return false;
+      }
+    }
+
+    // Load statistics
+    async function loadStats() {
+      try {
+        const response = await fetch(`${API_BASE}/api/admin/stats`, {
+          credentials: 'include'
+        });
+        const data = await response.json();
+
+        document.getElementById('totalUsers').textContent = data.totalUsers || 0;
+        document.getElementById('totalProducts').textContent = data.totalProducts || 0;
+        document.getElementById('availableProducts').textContent = data.availableProducts || 0;
+        document.getElementById('soldProducts').textContent = data.soldProducts || 0;
+      } catch (error) {
+        console.error('Failed to load stats:', error);
+      }
+    }
+
+    // Load users
+    async function loadUsers() {
+      try {
+        const response = await fetch(`${API_BASE}/api/admin/users`, {
+          credentials: 'include'
+        });
+        allUsers = await response.json();
+        renderUsers(allUsers);
+      } catch (error) {
+        document.getElementById('usersTable').innerHTML = '<p class="error">Failed to load users</p>';
+      }
+    }
+
+    function renderUsers(users) {
+      const html = `
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Role</th>
+              <th>Joined</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${users.map(user => `
+              <tr>
+                <td>${user.user_id}</td>
+                <td>${user.full_name}</td>
+                <td>${user.email}</td>
+                <td>${user.phone || 'N/A'}</td>
+                <td><span class="badge badge-${user.role}">${user.role}</span></td>
+                <td>${new Date(user.created_at).toLocaleDateString()}</td>
+                <td class="action-btns">
+                  ${user.role !== 'admin' ? `
+                    <button class="btn btn-small btn-warning" onclick="toggleRole(${user.user_id}, '${user.role}')">
+                      ${user.role === 'student' ? 'Make Admin' : 'Make Student'}
+                    </button>
+                    <button class="btn btn-small btn-danger" onclick="deleteUser(${user.user_id})">Delete</button>
+                  ` : '<span style="color: #888;">Protected</span>'}
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+      document.getElementById('usersTable').innerHTML = html;
+    }
+
+    // Load products
+    async function loadProducts() {
+      try {
+        const response = await fetch(`${API_BASE}/api/admin/products`, {
+          credentials: 'include'
+        });
+        allProducts = await response.json();
+        renderProducts(allProducts);
+      } catch (error) {
+        document.getElementById('productsTable').innerHTML = '<p class="error">Failed to load products</p>';
+      }
+    }
+
+    function renderProducts(products) {
+      const html = `
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Image</th>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Seller</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${products.map(product => `
+              <tr>
+                <td>${product.product_id}</td>
+                <td>
+                  ${product.image1 ? `<img src="/uploads/${product.image1}" class="product-image" alt="${product.title}">` : '📦'}
+                </td>
+                <td>${product.title}</td>
+                <td>${product.category || 'N/A'}</td>
+                <td>₹${product.price}</td>
+                <td>${product.seller_name || 'Unknown'}</td>
+                <td><span class="badge badge-${product.status === 'Available' ? 'available' : 'sold'}">${product.status}</span></td>
+                <td class="action-btns">
+                  <button class="btn btn-small btn-danger" onclick="deleteProduct(${product.product_id})">Delete</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+      document.getElementById('productsTable').innerHTML = html;
+    }
+
+    // Load messages
+    async function loadMessages() {
+      try {
+        const response = await fetch(`${API_BASE}/api/admin/messages`, {
+          credentials: 'include'
+        });
+        allMessages = await response.json();
+        renderMessages(allMessages);
+      } catch (error) {
+        document.getElementById('messagesTable').innerHTML = '<p class="error">Failed to load messages</p>';
+      }
+    }
+
+    function renderMessages(messages) {
+      const html = `
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>From</th>
+              <th>To</th>
+              <th>Product</th>
+              <th>Message</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${messages.map(msg => `
+              <tr>
+                <td>${msg.message_id}</td>
+                <td>${msg.sender_name}</td>
+                <td>${msg.receiver_name}</td>
+                <td>${msg.product_title || 'N/A'}</td>
+                <td>${msg.message_text.substring(0, 50)}${msg.message_text.length > 50 ? '...' : ''}</td>
+                <td>${new Date(msg.created_at).toLocaleString()}</td>
+                <td class="action-btns">
+                  <button class="btn btn-small btn-danger" onclick="deleteMessage(${msg.message_id})">Delete</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+      document.getElementById('messagesTable').innerHTML = html;
+    }
+
+    // Toggle user role
+    async function toggleRole(userId, currentRole) {
+      const newRole = currentRole === 'student' ? 'admin' : 'student';
+      if (!confirm(`Change user role to ${newRole}?`)) return;
+
+      try {
+        const response = await fetch(`${API_BASE}/api/admin/users/${userId}/role`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ role: newRole })
+        });
+
+        if (response.ok) {
+          showMessage('User role updated successfully', 'success');
+          loadUsers();
+        } else {
+          showMessage('Failed to update user role', 'error');
+        }
+      } catch (error) {
+        showMessage('Error updating user role', 'error');
+      }
+    }
+
+    // Delete user
+    async function deleteUser(userId) {
+      if (!confirm('Are you sure you want to delete this user? This will also delete all their products and messages.')) return;
+
+      try {
+        const response = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          showMessage('User deleted successfully', 'success');
+          loadUsers();
+          loadStats();
+        } else {
+          showMessage('Failed to delete user', 'error');
+        }
+      } catch (error) {
+        showMessage('Error deleting user', 'error');
+      }
+    }
+
+    // Delete product
+    async function deleteProduct(productId) {
+      if (!confirm('Are you sure you want to delete this product?')) return;
+
+      try {
+        const response = await fetch(`${API_BASE}/api/admin/products/${productId}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          showMessage('Product deleted successfully', 'success');
+          loadProducts();
+          loadStats();
+        } else {
+          showMessage('Failed to delete product', 'error');
+        }
+      } catch (error) {
+        showMessage('Error deleting product', 'error');
+      }
+    }
+
+    // Delete message
+    async function deleteMessage(messageId) {
+      if (!confirm('Are you sure you want to delete this message?')) return;
+
+      try {
+        const response = await fetch(`${API_BASE}/api/admin/messages/${messageId}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          showMessage('Message deleted successfully', 'success');
+          loadMessages();
+        } else {
+          showMessage('Failed to delete message', 'error');
+        }
+      } catch (error) {
+        showMessage('Error deleting message', 'error');
+      }
+    }
+
+    function showMessage(text, type) {
+      const message = document.getElementById('message');
+      message.textContent = text;
+      message.className = `message ${type}`;
+      message.style.display = 'block';
+      setTimeout(() => {
+        message.style.display = 'none';
+      }, 5000);
+    }
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabName = tab.dataset.tab;
+        
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        tab.classList.add('active');
+        document.getElementById(tabName).classList.add('active');
+        
+        if (tabName === 'users' && allUsers.length === 0) loadUsers();
+        if (tabName === 'products' && allProducts.length === 0) loadProducts();
+        if (tabName === 'messages' && allMessages.length === 0) loadMessages();
+      });
+    });
+
+    // Search functionality
+    document.getElementById('userSearch').addEventListener('input', (e) => {
+      const search = e.target.value.toLowerCase();
+      const filtered = allUsers.filter(user => 
+        user.full_name.toLowerCase().includes(search) || 
+        user.email.toLowerCase().includes(search)
+      );
+      renderUsers(filtered);
+    });
+
+    document.getElementById('productSearch').addEventListener('input', (e) => {
+      const search = e.target.value.toLowerCase();
+      const filtered = allProducts.filter(product => 
+        product.title.toLowerCase().includes(search) || 
+        (product.category && product.category.toLowerCase().includes(search))
+      );
+      renderProducts(filtered);
+    });
+
+    document.getElementById('messageSearch').addEventListener('input', (e) => {
+      const search = e.target.value.toLowerCase();
+      const filtered = allMessages.filter(msg => 
+        msg.message_text.toLowerCase().includes(search) ||
+        msg.sender_name.toLowerCase().includes(search)
+      );
+      renderMessages(filtered);
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      try {
+        await fetch(`${API_BASE}/api/logout`, { method: 'POST', credentials: 'include' });
+      } catch (err) {
+        console.error('Logout failed', err);
+      }
+      window.location.href = 'login.html';
+    });
+
+    // Initialize
+    async function init() {
+      const isAdmin = await checkAdminAuth();
+      if (isAdmin) {
+        loadStats();
+        loadUsers();
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -495,6 +495,167 @@ app.post("/api/logout", (req, res) => {
   });
 });
 
+// ====== ADMIN ROUTES ======
+
+// Middleware to check admin role
+function requireAdmin(req, res, next) {
+  if (!req.session.user) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+  if (req.session.user.role !== 'admin') {
+    return res.status(403).json({ message: "Admin access required" });
+  }
+  next();
+}
+
+// Get admin statistics
+app.get("/api/admin/stats", requireAdmin, (req, res) => {
+  db.get('SELECT COUNT(*) as count FROM users', (err, users) => {
+    if (err) return res.status(500).json({ message: "Error fetching stats" });
+    
+    db.get('SELECT COUNT(*) as count FROM products', (err2, products) => {
+      if (err2) return res.status(500).json({ message: "Error fetching stats" });
+      
+      db.get('SELECT COUNT(*) as count FROM products WHERE status = ?', ['Available'], (err3, available) => {
+        if (err3) return res.status(500).json({ message: "Error fetching stats" });
+        
+        db.get('SELECT COUNT(*) as count FROM products WHERE status = ?', ['Sold'], (err4, sold) => {
+          if (err4) return res.status(500).json({ message: "Error fetching stats" });
+          
+          res.json({
+            totalUsers: users.count,
+            totalProducts: products.count,
+            availableProducts: available.count,
+            soldProducts: sold.count
+          });
+        });
+      });
+    });
+  });
+});
+
+// Get all users
+app.get("/api/admin/users", requireAdmin, (req, res) => {
+  db.all('SELECT user_id, full_name, email, phone, role, created_at FROM users ORDER BY created_at DESC', (err, users) => {
+    if (err) {
+      console.error('Error fetching users:', err);
+      return res.status(500).json({ message: "Error fetching users" });
+    }
+    res.json(users);
+  });
+});
+
+// Update user role
+app.put("/api/admin/users/:userId/role", requireAdmin, (req, res) => {
+  const { userId } = req.params;
+  const { role } = req.body;
+
+  if (!['student', 'admin'].includes(role)) {
+    return res.status(400).json({ message: "Invalid role" });
+  }
+
+  db.run('UPDATE users SET role = ? WHERE user_id = ?', [role, userId], function(err) {
+    if (err) {
+      console.error('Error updating role:', err);
+      return res.status(500).json({ message: "Error updating role" });
+    }
+    res.json({ message: "Role updated successfully" });
+  });
+});
+
+// Delete user (and their products/messages)
+app.delete("/api/admin/users/:userId", requireAdmin, (req, res) => {
+  const { userId } = req.params;
+
+  // Prevent admin from deleting themselves
+  if (parseInt(userId) === req.session.user.user_id) {
+    return res.status(400).json({ message: "Cannot delete your own account" });
+  }
+
+  // Delete user's products first
+  db.run('DELETE FROM products WHERE seller_id = ?', [userId], (err) => {
+    if (err) console.error('Error deleting products:', err);
+    
+    // Delete user's messages
+    db.run('DELETE FROM messages WHERE sender_id = ? OR receiver_id = ?', [userId, userId], (err2) => {
+      if (err2) console.error('Error deleting messages:', err2);
+      
+      // Delete user
+      db.run('DELETE FROM users WHERE user_id = ?', [userId], function(err3) {
+        if (err3) {
+          console.error('Error deleting user:', err3);
+          return res.status(500).json({ message: "Error deleting user" });
+        }
+        res.json({ message: "User deleted successfully" });
+      });
+    });
+  });
+});
+
+// Get all products with seller info
+app.get("/api/admin/products", requireAdmin, (req, res) => {
+  db.all(`
+    SELECT p.*, u.full_name as seller_name 
+    FROM products p 
+    LEFT JOIN users u ON p.seller_id = u.user_id 
+    ORDER BY p.created_at DESC
+  `, (err, products) => {
+    if (err) {
+      console.error('Error fetching products:', err);
+      return res.status(500).json({ message: "Error fetching products" });
+    }
+    res.json(products);
+  });
+});
+
+// Delete product
+app.delete("/api/admin/products/:productId", requireAdmin, (req, res) => {
+  const { productId } = req.params;
+
+  db.run('DELETE FROM products WHERE product_id = ?', [productId], function(err) {
+    if (err) {
+      console.error('Error deleting product:', err);
+      return res.status(500).json({ message: "Error deleting product" });
+    }
+    res.json({ message: "Product deleted successfully" });
+  });
+});
+
+// Get all messages
+app.get("/api/admin/messages", requireAdmin, (req, res) => {
+  db.all(`
+    SELECT 
+      m.*,
+      s.full_name as sender_name,
+      r.full_name as receiver_name,
+      p.title as product_title
+    FROM messages m
+    LEFT JOIN users s ON m.sender_id = s.user_id
+    LEFT JOIN users r ON m.receiver_id = r.user_id
+    LEFT JOIN products p ON m.product_id = p.product_id
+    ORDER BY m.created_at DESC
+  `, (err, messages) => {
+    if (err) {
+      console.error('Error fetching messages:', err);
+      return res.status(500).json({ message: "Error fetching messages" });
+    }
+    res.json(messages);
+  });
+});
+
+// Delete message
+app.delete("/api/admin/messages/:messageId", requireAdmin, (req, res) => {
+  const { messageId } = req.params;
+
+  db.run('DELETE FROM messages WHERE message_id = ?', [messageId], function(err) {
+    if (err) {
+      console.error('Error deleting message:', err);
+      return res.status(500).json({ message: "Error deleting message" });
+    }
+    res.json({ message: "Message deleted successfully" });
+  });
+});
+
 // Email Verification Route
 app.get("/verify-email", (req, res) => {
   const { token } = req.query;
