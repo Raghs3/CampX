@@ -516,6 +516,146 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ====== AI AUTO-FILL FROM IMAGE ======
+  const image1Input = document.getElementById('image1File');
+  const image2Input = document.getElementById('image2File');
+  const image3Input = document.getElementById('image3File');
+  const aiAutoFillBtn = document.getElementById('aiAutoFillBtn');
+  const aiAnalysisStatus = document.getElementById('aiAnalysisStatus');
+  let uploadedImagePaths = [];
+  let aiAnalysisResult = null;
+
+  // Show AI Auto-Fill button when any image is selected
+  function updateAIButtonVisibility() {
+    const hasImage1 = image1Input && image1Input.files && image1Input.files[0];
+    aiAutoFillBtn.style.display = hasImage1 ? 'block' : 'none';
+  }
+
+  if (image1Input) {
+    image1Input.addEventListener('change', updateAIButtonVisibility);
+  }
+  if (image2Input) {
+    image2Input.addEventListener('change', updateAIButtonVisibility);
+  }
+  if (image3Input) {
+    image3Input.addEventListener('change', updateAIButtonVisibility);
+  }
+
+  // Handle AI Auto-Fill button click
+  if (aiAutoFillBtn) {
+    aiAutoFillBtn.addEventListener('click', async () => {
+      // Collect all selected images
+      const imagesToUpload = [];
+      if (image1Input && image1Input.files && image1Input.files[0]) {
+        imagesToUpload.push({ name: 'image1', file: image1Input.files[0] });
+      }
+      if (image2Input && image2Input.files && image2Input.files[0]) {
+        imagesToUpload.push({ name: 'image2', file: image2Input.files[0] });
+      }
+      if (image3Input && image3Input.files && image3Input.files[0]) {
+        imagesToUpload.push({ name: 'image3', file: image3Input.files[0] });
+      }
+
+      if (imagesToUpload.length === 0) {
+        alert('Please select at least one image first!');
+        return;
+      }
+
+      // Show loading status
+      aiAnalysisStatus.style.display = 'block';
+      aiAutoFillBtn.style.display = 'none';
+      document.getElementById('aiStatusIcon').textContent = '📤';
+      document.getElementById('aiStatusText').textContent = `Uploading ${imagesToUpload.length} image(s)...`;
+      document.getElementById('aiStatusDetails').textContent = 'Preparing images for AI analysis';
+
+      try {
+        // Upload all images first
+        const formData = new FormData();
+        imagesToUpload.forEach(img => {
+          formData.append(img.name, img.file);
+        });
+
+        const uploadRes = await fetch(`${API_BASE}/api/upload-temp-images`, {
+          method: 'POST',
+          credentials: 'include',
+          body: formData
+        });
+
+        if (!uploadRes.ok) {
+          throw new Error('Failed to upload images');
+        }
+
+        const uploadData = await uploadRes.json();
+        uploadedImagePaths = uploadData.imagePaths || [];
+
+        // Now analyze with AI
+      document.getElementById('aiStatusIcon').textContent = '🔄';
+      document.getElementById('aiStatusText').textContent = `AI analyzing ${uploadedImagePaths.length} image(s)...`;
+      document.getElementById('aiStatusDetails').textContent = 'Identifying product, condition, and pricing';
+
+        const analysisRes = await fetch(`${API_BASE}/api/analyze-image`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ imagePaths: uploadedImagePaths })
+        });
+
+        if (!analysisRes.ok) {
+          throw new Error('AI analysis failed');
+        }
+
+        aiAnalysisResult = await analysisRes.json();
+
+        // Check if flagged as suspicious
+        if (aiAnalysisResult.shadow_banned) {
+          document.getElementById('aiStatusIcon').textContent = '⚠️';
+          document.getElementById('aiStatusText').textContent = 'Image Flagged for Review';
+          document.getElementById('aiStatusDetails').textContent = aiAnalysisResult.flag_reason || 'This image may not be suitable for listing';
+          document.getElementById('aiAnalysisStatus').style.background = '#fee2e2';
+          document.getElementById('aiAnalysisStatus').style.borderColor = '#ef4444';
+          
+          setTimeout(() => {
+            aiAnalysisStatus.style.display = 'none';
+            aiAutoFillBtn.style.display = 'block';
+          }, 5000);
+          return;
+        }
+
+        // Auto-fill form with AI results
+        document.getElementById('title').value = aiAnalysisResult.title || '';
+        document.getElementById('description').value = aiAnalysisResult.description || '';
+        document.getElementById('category').value = aiAnalysisResult.category || '';
+        document.getElementById('condition').value = aiAnalysisResult.condition || '';
+        document.getElementById('price').value = aiAnalysisResult.suggested_price_inr || '';
+
+        // Show success status
+        document.getElementById('aiStatusIcon').textContent = '✅';
+        document.getElementById('aiStatusText').textContent = 'Form Auto-Filled Successfully!';
+        document.getElementById('aiStatusDetails').textContent = `Detected: ${aiAnalysisResult.title} | Condition: ${aiAnalysisResult.condition} | Confidence: ${aiAnalysisResult.legitimacy_score}%`;
+        document.getElementById('aiAnalysisStatus').style.background = '#dcfce7';
+        document.getElementById('aiAnalysisStatus').style.borderColor = '#22c55e';
+
+        // Hide status after 4 seconds
+        setTimeout(() => {
+          aiAnalysisStatus.style.display = 'none';
+        }, 4000);
+
+      } catch (error) {
+        console.error('AI analysis error:', error);
+        document.getElementById('aiStatusIcon').textContent = '❌';
+        document.getElementById('aiStatusText').textContent = 'Analysis Failed';
+        document.getElementById('aiStatusDetails').textContent = 'Could not analyze image. Please fill details manually.';
+        document.getElementById('aiAnalysisStatus').style.background = '#fee2e2';
+        document.getElementById('aiAnalysisStatus').style.borderColor = '#ef4444';
+
+        setTimeout(() => {
+          aiAnalysisStatus.style.display = 'none';
+          aiAutoFillBtn.style.display = 'block';
+        }, 3000);
+      }
+    });
+  }
+
   document.getElementById("productForm").addEventListener("submit", addProduct);
  // Sold items nav button
   const soldNav = document.getElementById('soldNavBtn');

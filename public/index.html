@@ -385,6 +385,23 @@ select.theme-select {
   <!-- Image uploads: first required, next two optional -->
   <label style="font-size:0.9rem;color:#555;">Image 1 (required)</label>
   <input id="image1File" name="image1" type="file" accept="image/*" style="margin-bottom:10px;" required />
+  
+  <!-- AI Auto-Fill Button (appears after image upload) -->
+  <button type="button" id="aiAutoFillBtn" style="display: none; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 12px; border: none; border-radius: 10px; cursor: pointer; margin-bottom: 15px; font-weight: 600; font-size: 14px; box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);">
+    ✨ AI Auto-Fill Product Details
+  </button>
+  
+  <!-- AI Analysis Status -->
+  <div id="aiAnalysisStatus" style="display: none; background: #f0f9ff; border: 2px solid #3b82f6; border-radius: 10px; padding: 12px; margin-bottom: 15px;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div id="aiStatusIcon" style="font-size: 24px;">🤖</div>
+      <div style="flex: 1;">
+        <div id="aiStatusText" style="font-weight: 600; color: #1e40af; margin-bottom: 4px;">Analyzing image...</div>
+        <div id="aiStatusDetails" style="font-size: 12px; color: #64748b;">Please wait while AI examines your product</div>
+      </div>
+    </div>
+  </div>
+  
   <label style="font-size:0.9rem;color:#555;">Image 2 (optional)</label>
   <input id="image2File" name="image2" type="file" accept="image/*" style="margin-bottom:10px;" />
   <label style="font-size:0.9rem;color:#555;">Image 3 (optional)</label>
