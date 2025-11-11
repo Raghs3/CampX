@@ -563,6 +563,8 @@ app.post("/api/login", (req, res) => {
 app.post("/api/forgot-password", (req, res) => {
   const { email } = req.body;
   
+  console.log("🔑 Forgot password request for:", email);
+  
   if (!email) {
     return res.status(400).json({ message: "Email is required" });
   }
@@ -570,16 +572,20 @@ app.post("/api/forgot-password", (req, res) => {
   // Check if user exists
   db.get('SELECT user_id, full_name FROM users WHERE email = ?', [email], (err, user) => {
     if (err) {
+      console.error("❌ Database error:", err.message);
       return res.status(500).json({ message: "Database error: " + err.message });
     }
     
     if (!user) {
+      console.log("⚠️ User not found for email:", email);
       // Don't reveal if email exists (security best practice)
       return res.json({ 
         message: "If an account with that email exists, a password reset link has been sent.",
         success: true
       });
     }
+
+    console.log("✅ User found:", user.full_name);
 
     // Generate reset token
     const reset_token = crypto.randomBytes(32).toString('hex');
