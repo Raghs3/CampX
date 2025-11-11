@@ -373,7 +373,7 @@ This project is licensed under the MIT License. See `LICENSE` file for details.
 
 ## 👨‍💻 Author
 
-**Raghav Sharma**
+**Raghav Kumar**
 - GitHub: [@Raghs3](https://github.com/Raghs3)
 - Project: [CampX Marketplace](https://github.com/Raghs3/CampX)
 - Live Demo: [https://campx-marketplace.onrender.com](https://campx-marketplace.onrender.com)
@@ -393,7 +393,7 @@ This project is licensed under the MIT License. See `LICENSE` file for details.
 
 For issues, questions, or suggestions:
 - Open an [Issue](https://github.com/Raghs3/CampX/issues)
-- Email: raghav.sharma@example.com
+- Email: raghav.kumar24@vit.edu
 
 ---
 
