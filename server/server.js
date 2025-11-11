@@ -537,8 +537,9 @@ app.post("/api/login", (req, res) => {
     // Check if email is verified (only required in production)
     if (process.env.NODE_ENV === 'production' && !user.email_verified) {
       return res.status(403).json({ 
-        message: "Please verify your email before logging in. Check your inbox for the verification link.",
-        emailNotVerified: true
+        message: "⚠️ Please verify your email before logging in. Click 'Resend Verification Email' below if you didn't receive it.",
+        emailVerified: false,
+        canResend: true
       });
     }
 
